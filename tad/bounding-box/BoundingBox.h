@@ -1,6 +1,8 @@
 
+// Estas instruções querem dizer: “Inclua este arquivo apenas uma vez.”
 #ifndef BOUNDINGBOX_H
 #define BOUNDINGBOX_H
+
 
 // arquivo BoundingBox.h
 
