@@ -167,6 +167,50 @@ int remove_lista_final(Lista* li){
     return 1;
 }
 
+
+/*
+Para remover um nó intermediário em uma lista simplesmente encadeada, normalmente é necessário:
+
+localizar o nó que será removido;
+guardar o nó anterior;
+fazer o nó anterior apontar para o próximo do nó removido;
+liberar a memória do nó removido.
+
+A lógica seria semelhante à utilizada em remove_lista_final, mas interrompendo no elemento desejado.
+
+Exemplo de implementação removendo pela matrícula:
+*/
+int remove_lista_meio(Lista* li, int mat){
+    if(li == nullptr || *li == nullptr)
+        return 0;
+
+    elemento *ant = nullptr;
+    elemento *no = *li;
+
+    // procura o elemento
+    while(no != nullptr && no->dados.matricula != mat){
+        ant = no;
+        no = no->prox;
+    }
+
+    // elemento não encontrado
+    if(no == nullptr)
+        return 0;
+
+    // remoção do primeiro elemento
+    if(ant == nullptr){
+        *li = no->prox;
+    }
+    // remoção do meio ou final
+    else{
+        ant->prox = no->prox;
+    }
+
+    delete no;
+
+    return 1;
+}
+
 // Imprime todos os elementos da lista
 void imprime_lista(Lista* li){
     if(li == nullptr)
@@ -221,6 +265,13 @@ int main(){
     // =====================
     // Remoções
     // =====================
+    cout << "\nAntes da remoção da matrícula 1:\n";
+    imprime_lista(li);
+    remove_lista_meio(li, 1);
+    cout << "\nApós a remoção da matrícula 1:\n";
+    imprime_lista(li);
+    
+
     // Remove sempre o último elemento
     for(int i = 0; i < 4; i++){
         remove_lista_final(li);
