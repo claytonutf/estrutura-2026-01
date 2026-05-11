@@ -1,0 +1,39 @@
+TAD
+Modularação TAD
+Listas 
+Listas estática sequencial (CRUD)
+Lista dinâmica encadeada (CRUD)
+Lista duplamente encaderada (CRUD)
+Listas circulares
+Fila estática e dinâmica (CRUD)
+Pilha estática e dinâmica (CRUD)
+Busca em vetores struct 
+Ordenação bubble, insertion, selection, merge, quick, heap
+Grafos
+Busca em grafos
+Árvores
+Árvore binária (CRUD)
+Árvore AVL (CRUD)
+Fila de prioridades
+Tabela hash 
+Função de hashing
+Análise de algoritmos
+Árvore rubro negra
+Algorimos de Prim e Kruskal
+Deque
+Relações de recorrência
+Ordenação bucket sort
+SkipList (CRUD)
+Conjunto (união, intereseção)
+Multiconjunto (bag)
+Ordenação shellsort
+Tabela de alocação de arquivos (FAT)
+Algoritmo Rabin-Karp
+Ordenação estável
+Reúso
+Índice linear em arquivos, lista invertida, hashing externo, hashing estático, hashing extensível
+Árvore B (CRUD)
+Árvore B*
+Árvore B+ (CRUD)
+Compressão de dados
+Código de Huffman
