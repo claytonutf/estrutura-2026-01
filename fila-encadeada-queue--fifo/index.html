@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fila Encadeada — Estrutura de Dados</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:        #f0f4f8;
+    --surface:   #ffffff;
+    --surface2:  #e8eef5;
+    --border:    #c9d6e3;
+    --accent:    #0077aa;
+    --accent2:   #d4500a;
+    --accent3:   #6d28d9;
+    --text:      #1a2233;
+    --muted:     #5a6a80;
+    --green:     #0e9e75;
+    --red:       #dc2b4f;
+    --yellow:    #b45309;
+    --font-mono: 'Space Mono', monospace;
+    --font-sans: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BG ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,119,170,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,119,170,.07) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* ── GLOW ORBS ── */
+  .orb {
+    position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0;
+  }
+  .orb-1 { width: 500px; height: 500px; top: -100px; left: -100px; background: rgba(0,119,170,.08); }
+  .orb-2 { width: 400px; height: 400px; bottom: 100px; right: -80px; background: rgba(109,40,217,.07); }
+  .orb-3 { width: 300px; height: 300px; top: 40%; left: 40%; background: rgba(212,80,10,.05); }
+
+  /* ── LAYOUT ── */
+  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── HERO ── */
+  header {
+    padding: 5rem 0 3rem;
+    text-align: center;
+    position: relative;
+  }
+  .badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: .75rem;
+    color: var(--accent);
+    border: 1px solid rgba(0,119,170,.3);
+    background: rgba(0,119,170,.07);
+    padding: .3rem 1rem;
+    border-radius: 2rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: .1em;
+    animation: fadeDown .6s ease both;
+  }
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    animation: fadeDown .6s .1s ease both;
+  }
+  h1 span.hl  { color: var(--accent); }
+  h1 span.hl2 { color: var(--accent2); }
+
+  .hero-sub {
+    max-width: 580px;
+    margin: 1.5rem auto 0;
+    color: var(--muted);
+    font-size: 1.05rem;
+    animation: fadeDown .6s .2s ease both;
+  }
+
+  .hero-tags {
+    display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center;
+    margin-top: 2rem;
+    animation: fadeDown .6s .3s ease both;
+  }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    padding: .25rem .75rem;
+    border-radius: .25rem;
+    letter-spacing: .05em;
+  }
+  .tag-blue  { background: rgba(0,119,170,.1);  color: var(--accent);  border: 1px solid rgba(0,119,170,.25); }
+  .tag-org   { background: rgba(212,80,10,.1);  color: var(--accent2); border: 1px solid rgba(212,80,10,.25); }
+  .tag-pur   { background: rgba(109,40,217,.1); color: #7c3aed;        border: 1px solid rgba(109,40,217,.25); }
+
+  /* ── SECTION COMMON ── */
+  section { padding: 4rem 0; }
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    color: var(--accent);
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    margin-bottom: .75rem;
+  }
+  h2 {
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  p.lead { color: var(--muted); max-width: 640px; margin-bottom: 2.5rem; }
+
+  /* ── DIVIDER ── */
+  hr.div {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 1rem 0;
+  }
+
+  /* ── CONCEPT CARD ── */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+    padding: 1.75rem;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0,119,170,.4);
+    box-shadow: 0 12px 40px rgba(0,0,0,.1), 0 0 20px rgba(0,119,170,.06);
+  }
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: .5rem;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+  .card-icon.blue { background: rgba(0,119,170,.1); }
+  .card-icon.org  { background: rgba(212,80,10,.1); }
+  .card-icon.pur  { background: rgba(109,40,217,.1); }
+  .card-icon.grn  { background: rgba(14,158,117,.1); }
+  .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; }
+  .card p  { font-size: .9rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── QUEUE VISUALIZER ── */
+  .vis-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 2rem;
+    overflow-x: auto;
+  }
+  .vis-label-row {
+    display: flex; gap: 1rem; margin-bottom: .75rem;
+  }
+  .vis-label {
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    color: var(--muted);
+    letter-spacing: .1em;
+  }
+  .vis-label.start { color: var(--green); }
+  .vis-label.end   { color: var(--accent2); }
+
+  .queue-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-height: 80px;
+    flex-wrap: nowrap;
+  }
+
+  .q-node {
+    display: flex; flex-direction: column;
+    align-items: center;
+    animation: popIn .4s ease both;
+  }
+  .q-box {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: .5rem;
+    padding: .6rem 1rem;
+    min-width: 110px;
+    text-align: center;
+    position: relative;
+    transition: border-color .3s;
+  }
+  .q-box.first { border-color: var(--green); box-shadow: 0 0 12px rgba(14,158,117,.15); }
+  .q-box.last  { border-color: var(--accent2); box-shadow: 0 0 12px rgba(212,80,10,.15); }
+
+  .q-mat  { font-family: var(--font-mono); font-size: .65rem; color: var(--muted); }
+  .q-name { font-weight: 700; font-size: .95rem; }
+  .q-notes{ font-family: var(--font-mono); font-size: .62rem; color: var(--accent); margin-top: .2rem; }
+
+  .q-ptr {
+    display: flex; align-items: center;
+    padding: 0 .2rem;
+  }
+  .q-ptr svg { flex-shrink: 0; }
+
+  .q-null {
+    font-family: var(--font-mono);
+    font-size: .8rem;
+    color: var(--red);
+    padding: 0 .5rem;
+    opacity: .7;
+  }
+
+  .badge-ptr {
+    font-family: var(--font-mono); font-size: .6rem; padding: .15rem .4rem;
+    border-radius: .2rem; margin-top: .3rem;
+  }
+  .bp-start { background: rgba(34,211,164,.15); color: var(--green); }
+  .bp-end   { background: rgba(255,107,53,.15);  color: var(--accent2); }
+
+  /* Controls */
+  .vis-controls {
+    display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem;
+    align-items: center;
+  }
+  .vis-controls input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: .4rem;
+    padding: .5rem .9rem;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: .8rem;
+    width: 150px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .vis-controls input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,119,170,.1); }
+
+  .btn {
+    font-family: var(--font-mono);
+    font-size: .75rem;
+    padding: .5rem 1.2rem;
+    border-radius: .4rem;
+    border: none;
+    cursor: pointer;
+    letter-spacing: .05em;
+    transition: opacity .2s, transform .1s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-enq { background: var(--green);   color: #0b0e17; font-weight: 700; }
+  .btn-deq { background: var(--red);     color: #fff;    font-weight: 700; }
+  .btn-peek{ background: var(--accent);  color: #0b0e17; font-weight: 700; }
+  .btn:hover { opacity: .85; }
+
+  .vis-status {
+    margin-top: 1rem;
+    font-family: var(--font-mono);
+    font-size: .8rem;
+    min-height: 1.2rem;
+    color: var(--yellow);
+  }
+
+  /* ── STRUCTURES ── */
+  .struct-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  .struct-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+    overflow: hidden;
+  }
+  .struct-header {
+    padding: .75rem 1.25rem;
+    font-family: var(--font-mono);
+    font-size: .75rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .struct-header.aluno  { background: rgba(0,119,170,.07);   color: var(--accent); }
+  .struct-header.node   { background: rgba(109,40,217,.08);  color: #6d28d9; }
+  .struct-header.queue  { background: rgba(212,80,10,.07);   color: var(--accent2); }
+  .struct-dot { width:8px; height:8px; border-radius:50%; }
+  .dot-blue { background: var(--accent); }
+  .dot-pur  { background: #6d28d9; }
+  .dot-org  { background: var(--accent2); }
+
+  .struct-body { padding: 1.25rem; }
+  .field-row {
+    display: flex; gap: .75rem; align-items: flex-start;
+    margin-bottom: .75rem;
+  }
+  .field-row:last-child { margin-bottom: 0; }
+  .field-type {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    color: var(--accent3);
+    min-width: 80px;
+    padding-top: .1rem;
+  }
+  .field-name {
+    font-family: var(--font-mono);
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .field-desc {
+    font-size: .78rem;
+    color: var(--muted);
+    margin-top: .15rem;
+  }
+
+  /* ── OPERATIONS TABLE ── */
+  .ops-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+  .op-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+    padding: 1.5rem;
+    border-left: 3px solid transparent;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .op-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.1); }
+  .op-card.enqueue  { border-left-color: var(--green); }
+  .op-card.dequeue  { border-left-color: var(--red); }
+  .op-card.front    { border-left-color: var(--accent); }
+  .op-card.size     { border-left-color: var(--yellow); }
+  .op-card.free     { border-left-color: #a78bfa; }
+
+  .op-sig {
+    font-family: var(--font-mono);
+    font-size: .75rem;
+    padding: .3rem .7rem;
+    border-radius: .25rem;
+    display: inline-block;
+    margin-bottom: .8rem;
+  }
+  .op-card.enqueue .op-sig  { background:rgba(14,158,117,.1);  color:var(--green); }
+  .op-card.dequeue .op-sig  { background:rgba(220,43,79,.1);   color:var(--red); }
+  .op-card.front   .op-sig  { background:rgba(0,119,170,.1);   color:var(--accent); }
+  .op-card.size    .op-sig  { background:rgba(180,83,9,.1);    color:var(--yellow); }
+  .op-card.free    .op-sig  { background:rgba(109,40,217,.1);  color:#6d28d9; }
+
+  .op-card h4  { font-size:1rem; font-weight:700; margin-bottom:.4rem; }
+  .op-card p   { font-size:.85rem; color:var(--muted); }
+  .op-complexity {
+    display:flex; align-items:center; gap:.4rem;
+    margin-top:.75rem;
+  }
+  .op-complexity span:first-child { font-size:.75rem; color:var(--muted); }
+  .complexity-badge {
+    font-family:var(--font-mono); font-size:.7rem;
+    background:rgba(0,119,170,.08); color:var(--accent);
+    padding:.15rem .5rem; border-radius:.2rem;
+    border: 1px solid rgba(0,119,170,.2);
+  }
+
+  /* ── CODE ── */
+  .code-wrap {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+    overflow: hidden;
+    margin-top: 2rem;
+  }
+  .code-tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: #edf2f7;
+    overflow-x: auto;
+  }
+  .code-tab {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    padding: .65rem 1.25rem;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+  }
+  .code-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .code-panel { display:none; }
+  .code-panel.active { display:block; }
+
+  pre {
+    padding: 1.75rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: .78rem;
+    line-height: 1.7;
+    counter-reset: line;
+  }
+  .ln { display:block; }
+  .ln::before {
+    counter-increment: line;
+    content: counter(line);
+    display: inline-block;
+    width: 2.2rem;
+    color: #a0b0c8;
+    user-select: none;
+    text-align: right;
+    margin-right: 1.2rem;
+  }
+  .kw   { color: #6d28d9; }
+  .type { color: #0e7a5a; }
+  .fn   { color: #0077aa; }
+  .str  { color: #b45309; }
+  .cm   { color: #8faabf; font-style: italic; }
+  .num  { color: #dc2b4f; }
+  .op   { color: #64748b; }
+
+  /* ── FIFO BOX ── */
+  .fifo-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 2.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+    align-items: center;
+  }
+  @media(max-width:640px){ .fifo-box { grid-template-columns: 1fr; } }
+  .fifo-diagram {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+  .fifo-el {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    width: 52px; height: 52px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:.8rem; font-weight:700;
+    position: relative;
+  }
+  .fifo-el:first-child { border-radius: .4rem 0 0 .4rem; border-color: var(--green); color: var(--green); }
+  .fifo-el:last-child  { border-radius: 0 .4rem .4rem 0; border-color: var(--accent2); color: var(--accent2); }
+  .fifo-arrow {
+    width:20px; height:2px; background: var(--border);
+    position: relative; display:flex; align-items:center;
+  }
+  .enq-label {
+    font-family:var(--font-mono); font-size:.7rem;
+    color:var(--accent2); text-align:center; margin-top:.5rem;
+  }
+  .deq-label {
+    font-family:var(--font-mono); font-size:.7rem;
+    color:var(--green); text-align:center; margin-top:.5rem;
+  }
+  .fifo-info h3 { font-size:1.2rem; font-weight:700; margin-bottom:1rem; }
+  .fifo-info ul { list-style:none; display:flex; flex-direction:column; gap:.6rem; }
+  .fifo-info li {
+    display:flex; gap:.75rem; align-items:flex-start;
+    font-size:.9rem; color:var(--muted);
+  }
+  .fifo-info li::before {
+    content:'→';
+    color:var(--accent);
+    font-family:var(--font-mono);
+    flex-shrink:0;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 3rem 0 2rem;
+    color: var(--muted);
+    font-size: .8rem;
+    border-top: 1px solid var(--border);
+  }
+  footer strong { color: var(--accent); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeDown {
+    from { opacity:0; transform:translateY(-16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes popIn {
+    from { opacity:0; transform:scale(.8); }
+    to   { opacity:1; transform:scale(1); }
+  }
+  @keyframes pulse-border {
+    0%,100%{ box-shadow: 0 0 0 0 rgba(0,119,170,.4); }
+    50%    { box-shadow: 0 0 0 6px rgba(0,119,170,0); }
+  }
+  .pulse { animation: pulse-border 1.5s infinite; }
+
+  /* scroll reveal */
+  .reveal {
+    opacity:0; transform:translateY(24px);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+<header>
+  <div class="container">
+    <div class="badge">// estrutura de dados · c++</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;animation:fadeDown .6s .05s ease both;">
+      <div style="display:flex;align-items:center;gap:.6rem;background:var(--surface);border:1px solid var(--border);border-radius:.5rem;padding:.55rem 1.1rem;">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent3),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#fff;flex-shrink:0;">CK</div>
+        <div>
+          <div style="font-size:.8rem;font-weight:700;line-height:1.2;">Prof. Clayton Kossoski</div>
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--muted);letter-spacing:.04em;">Universidade Tecnológica Federal do Paraná</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:.5rem;padding:.55rem 1.1rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color:var(--accent);flex-shrink:0"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--muted);letter-spacing:.04em;">UTFPR</div>
+      </div>
+    </div>
+    <h1>Fila <span class="hl">Encadeada</span><br><span class="hl2">Linked Queue</span></h1>
+    <p class="hero-sub">
+      Implementação dinâmica baseada em ponteiros, seguindo o princípio
+      <strong>FIFO</strong> — First In, First Out.
+    </p>
+    <div class="hero-tags">
+      <span class="tag tag-blue">FIFO</span>
+      <span class="tag tag-org">Ponteiros</span>
+      <span class="tag tag-pur">Memória Dinâmica</span>
+      <span class="tag tag-blue">Enqueue · Dequeue</span>
+      <span class="tag tag-org">C++ / new · delete</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════ CONCEITO ════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">// 01 — conceito</div>
+    <h2 class="reveal">O que é uma <span style="color:var(--accent)">fila encadeada</span>?</h2>
+    <p class="lead reveal">
+      Uma fila encadeada é uma estrutura de dados linear em que os elementos são
+      alocados dinamicamente na memória heap e conectados por ponteiros.
+      Ao contrário do vetor, não há limite fixo de tamanho.
+    </p>
+
+    <!-- FIFO box -->
+    <div class="fifo-box reveal">
+      <div>
+        <div style="text-align:center; margin-bottom:1rem;">
+          <span style="font-family:var(--font-mono);font-size:.75rem;color:var(--muted);">↓ ENQUEUE (inserção no final)</span>
+        </div>
+        <div class="fifo-diagram">
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--green);margin-bottom:4px;">INÍCIO</div>
+            <div class="fifo-el" style="border-radius:.4rem 0 0 .4rem">A</div>
+          </div>
+          <div class="fifo-arrow"></div>
+          <div class="fifo-el">B</div>
+          <div class="fifo-arrow"></div>
+          <div class="fifo-el">C</div>
+          <div class="fifo-arrow"></div>
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--accent2);margin-bottom:4px;">FINAL</div>
+            <div class="fifo-el" style="border-radius:0 .4rem .4rem 0">D</div>
+          </div>
+        </div>
+        <div style="text-align:center; margin-top:1rem;">
+          <span style="font-family:var(--font-mono);font-size:.75rem;color:var(--muted);">↑ DEQUEUE (remoção no início)</span>
+        </div>
+      </div>
+      <div class="fifo-info">
+        <h3>Princípio FIFO</h3>
+        <ul>
+          <li>Quem entra primeiro, sai primeiro</li>
+          <li>Inserção sempre no <strong style="color:var(--accent2)">final</strong> da fila</li>
+          <li>Remoção sempre no <strong style="color:var(--green)">início</strong> da fila</li>
+          <li>Encadeamento via ponteiro <code style="color:var(--accent);font-family:var(--font-mono)">*prox</code></li>
+          <li>Memória alocada dinamicamente com <code style="color:var(--accent);font-family:var(--font-mono)">new</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- concept cards -->
+    <div class="concept-grid" style="margin-top:1.5rem;">
+      <div class="card reveal">
+        <div class="card-icon blue">🔗</div>
+        <h3>Encadeamento Dinâmico</h3>
+        <p>Cada nó aponta para o próximo via ponteiro <code style="color:var(--accent)">*prox</code>. O último nó aponta para <code style="color:var(--red)">nullptr</code>, indicando o fim.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon org">⚡</div>
+        <h3>Sem Limite de Tamanho</h3>
+        <p>Ao contrário de um array estático, a fila encadeada cresce dinamicamente conforme a necessidade, limitada apenas pela memória disponível.</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon pur">📌</div>
+        <h3>Dois Ponteiros de Controle</h3>
+        <p>A struct <code style="color:var(--accent)">fila</code> mantém ponteiros para o <strong style="color:var(--green)">início</strong> (remoção) e para o <strong style="color:var(--accent2)">final</strong> (inserção).</p>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon grn">🎯</div>
+        <h3>Gerenciamento de Memória</h3>
+        <p>Cada inserção aloca um nó com <code style="color:var(--green)">new</code>. Cada remoção libera a memória com <code style="color:var(--red)">delete</code>, evitando vazamentos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ═══════════════════════════════ ESTRUTURAS ════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">// 02 — estruturas</div>
+    <h2 class="reveal">Definição das <span style="color:var(--accent)">Structs</span></h2>
+    <p class="lead reveal">
+      O código utiliza três structs encadeadas: o dado (<code style="color:var(--accent)">aluno</code>),
+      o nó (<code style="color:var(--accent)">elemento</code>) e a fila em si (<code style="color:var(--accent)">fila</code>).
+    </p>
+
+    <div class="struct-grid">
+      <!-- ALUNO -->
+      <div class="struct-card reveal">
+        <div class="struct-header aluno">
+          <div class="struct-dot dot-blue"></div>
+          struct aluno — dado armazenado
+        </div>
+        <div class="struct-body">
+          <div class="field-row">
+            <div><div class="field-type">int</div></div>
+            <div><div class="field-name">matricula</div><div class="field-desc">Identificador único do aluno</div></div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-type">char[30]</div></div>
+            <div><div class="field-name">nome</div><div class="field-desc">Nome do aluno (até 29 caracteres)</div></div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-type">float</div></div>
+            <div><div class="field-name">n1, n2, n3</div><div class="field-desc">Três notas do aluno</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ELEMENTO -->
+      <div class="struct-card reveal">
+        <div class="struct-header node">
+          <div class="struct-dot dot-pur"></div>
+          struct elemento — nó da fila
+        </div>
+        <div class="struct-body">
+          <div class="field-row">
+            <div><div class="field-type">aluno</div></div>
+            <div><div class="field-name">dados</div><div class="field-desc">Cópia do dado armazenado neste nó</div></div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-type">elemento*</div></div>
+            <div><div class="field-name">prox</div><div class="field-desc">Ponteiro para o próximo nó na fila</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILA -->
+      <div class="struct-card reveal">
+        <div class="struct-header queue">
+          <div class="struct-dot dot-org"></div>
+          struct fila — controle da fila
+        </div>
+        <div class="struct-body">
+          <div class="field-row">
+            <div><div class="field-type">elemento*</div></div>
+            <div><div class="field-name">inicio</div><div class="field-desc">Aponta para o primeiro nó — local de remoção (DEQUEUE)</div></div>
+          </div>
+          <div class="field-row">
+            <div><div class="field-type">elemento*</div></div>
+            <div><div class="field-name">final</div><div class="field-desc">Aponta para o último nó — local de inserção (ENQUEUE)</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagrama de memória -->
+    <div class="vis-wrap reveal" style="margin-top:2rem;">
+      <div style="font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-bottom:1rem;letter-spacing:.1em;">DIAGRAMA DE MEMÓRIA — HEAP</div>
+      <div style="display:flex;flex-wrap:nowrap;align-items:center;gap:0;overflow-x:auto;padding-bottom:.5rem;">
+
+        <!-- FILA struct -->
+        <div style="background:rgba(212,80,10,.06);border:1px solid rgba(212,80,10,.25);border-radius:.5rem;padding:.75rem 1rem;min-width:120px;flex-shrink:0;">
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--accent2);margin-bottom:.5rem;">struct fila</div>
+          <div style="font-family:var(--font-mono);font-size:.7rem;color:var(--green);">inicio →</div>
+          <div style="font-family:var(--font-mono);font-size:.7rem;color:var(--accent2);margin-top:.25rem;">final ———</div>
+          <div style="height:.5rem"></div>
+          <div style="font-size:.6rem;color:var(--muted);">stack</div>
+        </div>
+
+        <!-- Arrow to node 1 -->
+        <svg width="40" height="20" style="flex-shrink:0"><line x1="0" y1="10" x2="32" y2="10" stroke="#22d3a4" stroke-width="1.5"/><polygon points="32,6 40,10 32,14" fill="#22d3a4"/></svg>
+
+        <!-- Node 1 -->
+        <div style="background:var(--surface2);border:2px solid var(--green);border-radius:.5rem;padding:.75rem 1rem;min-width:130px;flex-shrink:0;box-shadow:0 0 12px rgba(14,158,117,.12);">
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--green);margin-bottom:.4rem;">nó 1 (heap)</div>
+          <div style="font-size:.75rem;font-weight:700;">Andre</div>
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--muted);">mat: 1</div>
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--accent);margin-top:.3rem;">prox →</div>
+        </div>
+
+        <!-- Arrow -->
+        <svg width="40" height="20" style="flex-shrink:0"><line x1="0" y1="10" x2="32" y2="10" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4,3"/><polygon points="32,6 40,10 32,14" fill="#64748b"/></svg>
+
+        <!-- Node 2 -->
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:.5rem;padding:.75rem 1rem;min-width:130px;flex-shrink:0;">
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--muted);margin-bottom:.4rem;">nó 2 (heap)</div>
+          <div style="font-size:.75rem;font-weight:700;">Ricardo</div>
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--muted);">mat: 2</div>
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--accent);margin-top:.3rem;">prox →</div>
+        </div>
+
+        <svg width="40" height="20" style="flex-shrink:0"><line x1="0" y1="10" x2="32" y2="10" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4,3"/><polygon points="32,6 40,10 32,14" fill="#64748b"/></svg>
+
+        <!-- Node 3 -->
+        <div style="background:var(--surface2);border:2px solid var(--accent2);border-radius:.5rem;padding:.75rem 1rem;min-width:130px;flex-shrink:0;box-shadow:0 0 12px rgba(212,80,10,.12);">
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--accent2);margin-bottom:.4rem;">nó 3 (heap)</div>
+          <div style="font-size:.75rem;font-weight:700;">Bianca</div>
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--muted);">mat: 3</div>
+          <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--red);margin-top:.3rem;">prox = nullptr</div>
+        </div>
+
+        <!-- final arrow -->
+        <svg width="40" height="20" style="flex-shrink:0"><line x1="0" y1="10" x2="32" y2="10" stroke="#ff6b35" stroke-width="1.5"/><polygon points="32,6 40,10 32,14" fill="#ff6b35"/></svg>
+        <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--accent2);">← final</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ═══════════════════════════════ VISUALIZADOR ════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">// 03 — simulação interativa</div>
+    <h2 class="reveal">Visualizador da <span style="color:var(--accent)">Fila</span></h2>
+    <p class="lead reveal">Insira e remova elementos para ver o encadeamento em tempo real.</p>
+
+    <div class="vis-wrap reveal">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem;">
+        <div style="font-family:var(--font-mono);font-size:.7rem;color:var(--muted);">FILA ATUAL — <span id="size-label" style="color:var(--accent)">0 elementos</span></div>
+        <div style="display:flex;gap:.75rem;">
+          <span style="font-family:var(--font-mono);font-size:.65rem;color:var(--green);">■ início</span>
+          <span style="font-family:var(--font-mono);font-size:.65rem;color:var(--accent2);">■ final</span>
+          <span style="font-family:var(--font-mono);font-size:.65rem;color:var(--red);">■ nullptr</span>
+        </div>
+      </div>
+
+      <div id="queue-container" style="min-height:90px;display:flex;align-items:center;">
+        <div style="font-family:var(--font-mono);font-size:.85rem;color:var(--muted);">[ fila vazia — inicio = nullptr, final = nullptr ]</div>
+      </div>
+
+      <div class="vis-controls">
+        <input type="text" id="inp-name" placeholder="nome (ex: Maria)" maxlength="20"/>
+        <button class="btn btn-enq" onclick="enqueue()">+ ENQUEUE</button>
+        <button class="btn btn-deq" onclick="dequeue()">− DEQUEUE</button>
+        <button class="btn btn-peek" onclick="peek()">👁 PEEK</button>
+      </div>
+      <div class="vis-status" id="status-msg"></div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ═══════════════════════════════ OPERAÇÕES ════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">// 04 — operações</div>
+    <h2 class="reveal">Funções <span style="color:var(--accent)">Implementadas</span></h2>
+    <p class="lead reveal">Cada função tem responsabilidade única e complexidade definida.</p>
+
+    <div class="ops-grid">
+      <div class="op-card enqueue reveal">
+        <div class="op-sig">insere_fila(fi, al)</div>
+        <h4>Enqueue</h4>
+        <p>Aloca novo nó com <code style="color:var(--green)">new</code>, define <code>prox = nullptr</code>, atualiza o ponteiro <code>final</code>. Se a fila estava vazia, atualiza também <code>inicio</code>.</p>
+        <div class="op-complexity"><span>Complexidade:</span><span class="complexity-badge">O(1)</span></div>
+      </div>
+      <div class="op-card dequeue reveal">
+        <div class="op-sig">remove_fila(fi)</div>
+        <h4>Dequeue</h4>
+        <p>Guarda ponteiro para o primeiro nó, avança <code>inicio</code> para o próximo. Se a fila ficou vazia, atualiza <code>final = nullptr</code>. Libera memória com <code style="color:var(--red)">delete</code>.</p>
+        <div class="op-complexity"><span>Complexidade:</span><span class="complexity-badge">O(1)</span></div>
+      </div>
+      <div class="op-card front reveal">
+        <div class="op-sig">consulta_fila(fi, *al)</div>
+        <h4>Front / Peek</h4>
+        <p>Copia os dados do nó no início da fila para o ponteiro fornecido. Não remove o elemento. Retorna <code>0</code> se a fila estiver vazia.</p>
+        <div class="op-complexity"><span>Complexidade:</span><span class="complexity-badge">O(1)</span></div>
+      </div>
+      <div class="op-card size reveal">
+        <div class="op-sig">tamanho_fila(fi)</div>
+        <h4>Size</h4>
+        <p>Percorre todos os nós a partir de <code>inicio</code>, contando elementos. Não há contador interno na struct, portanto a travessia é necessária.</p>
+        <div class="op-complexity"><span>Complexidade:</span><span class="complexity-badge">O(n)</span></div>
+      </div>
+      <div class="op-card free reveal">
+        <div class="op-sig">libera_fila(fi)</div>
+        <h4>Free / Destructor</h4>
+        <p>Loop enquanto <code>inicio != nullptr</code>: guarda nó atual, avança início, chama <code style="color:var(--red)">delete</code>. Ao final, libera a própria struct <code>fila</code>.</p>
+        <div class="op-complexity"><span>Complexidade:</span><span class="complexity-badge">O(n)</span></div>
+      </div>
+      <div class="op-card reveal" style="border-left-color:#64748b;">
+        <div class="op-sig" style="background:rgba(100,116,139,.1);color:#94a3b8;">cria_fila()</div>
+        <h4>Create</h4>
+        <p>Aloca a struct <code>fila</code> no heap. Inicializa ambos os ponteiros (<code>inicio</code> e <code>final</code>) com <code style="color:var(--red)">nullptr</code>, representando fila vazia.</p>
+        <div class="op-complexity"><span>Complexidade:</span><span class="complexity-badge">O(1)</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ═══════════════════════════════ CÓDIGO ════════════════════════════════ -->
+<section>
+  <div class="container">
+    <div class="section-label reveal">// 05 — código fonte</div>
+    <h2 class="reveal">Implementação em <span style="color:var(--accent)">C++</span></h2>
+    <p class="lead reveal">Código completo com comentários explicativos.</p>
+
+    <div class="code-wrap reveal">
+      <div class="code-tab-bar">
+        <div class="code-tab active" onclick="switchTab('insere')">insere_fila()</div>
+        <div class="code-tab" onclick="switchTab('remove')">remove_fila()</div>
+        <div class="code-tab" onclick="switchTab('consulta')">consulta_fila()</div>
+        <div class="code-tab" onclick="switchTab('libera')">libera_fila()</div>
+        <div class="code-tab" onclick="switchTab('main')">main()</div>
+      </div>
+
+      <!-- INSERE -->
+      <div class="code-panel active" id="tab-insere">
+        <pre><span class="ln"><span class="cm">// Insere elemento no FINAL da fila — O(1)</span></span>
+<span class="ln"><span class="kw">int</span> <span class="fn">insere_fila</span>(<span class="type">Fila</span> fi, <span class="type">aluno</span> al) {</span>
+<span class="ln"></span>
+<span class="ln">    <span class="kw">if</span> (fi <span class="op">==</span> <span class="kw">nullptr</span>) <span class="kw">return</span> <span class="num">0</span>;</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// aloca novo nó no heap</span></span>
+<span class="ln">    <span class="type">elemento</span> <span class="op">*</span>no <span class="op">=</span> <span class="kw">new</span> <span class="type">elemento</span>;</span>
+<span class="ln">    <span class="kw">if</span> (no <span class="op">==</span> <span class="kw">nullptr</span>) <span class="kw">return</span> <span class="num">0</span>;</span>
+<span class="ln"></span>
+<span class="ln">    no<span class="op">-></span>dados <span class="op">=</span> al;        <span class="cm">// copia dados</span></span>
+<span class="ln">    no<span class="op">-></span>prox  <span class="op">=</span> <span class="kw">nullptr</span>; <span class="cm">// será o último</span></span>
+<span class="ln"></span>
+<span class="ln">    <span class="kw">if</span> (fi<span class="op">-></span>inicio <span class="op">==</span> <span class="kw">nullptr</span>) {</span>
+<span class="ln">        <span class="cm">// fila vazia: início e final apontam para o único nó</span></span>
+<span class="ln">        fi<span class="op">-></span>inicio <span class="op">=</span> no;</span>
+<span class="ln">        fi<span class="op">-></span>final  <span class="op">=</span> no;</span>
+<span class="ln">    } <span class="kw">else</span> {</span>
+<span class="ln">        <span class="cm">// fila não vazia: encadeia no fim</span></span>
+<span class="ln">        fi<span class="op">-></span>final<span class="op">-></span>prox <span class="op">=</span> no; <span class="cm">// último aponta para novo</span></span>
+<span class="ln">        fi<span class="op">-></span>final       <span class="op">=</span> no; <span class="cm">// atualiza ponteiro final</span></span>
+<span class="ln">    }</span>
+<span class="ln">    <span class="kw">return</span> <span class="num">1</span>;</span>
+<span class="ln">}</span></pre>
+      </div>
+
+      <!-- REMOVE -->
+      <div class="code-panel" id="tab-remove">
+        <pre><span class="ln"><span class="cm">// Remove elemento do INÍCIO da fila — O(1)</span></span>
+<span class="ln"><span class="kw">int</span> <span class="fn">remove_fila</span>(<span class="type">Fila</span> fi) {</span>
+<span class="ln"></span>
+<span class="ln">    <span class="kw">if</span> (fi <span class="op">==</span> <span class="kw">nullptr</span> <span class="op">||</span> fi<span class="op">-></span>inicio <span class="op">==</span> <span class="kw">nullptr</span>)</span>
+<span class="ln">        <span class="kw">return</span> <span class="num">0</span>;</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// guarda referência ao primeiro nó</span></span>
+<span class="ln">    <span class="type">elemento</span> <span class="op">*</span>no <span class="op">=</span> fi<span class="op">-></span>inicio;</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// avança o início para o próximo</span></span>
+<span class="ln">    fi<span class="op">-></span>inicio <span class="op">=</span> fi<span class="op">-></span>inicio<span class="op">-></span>prox;</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// se ficou vazia, final também é nullptr</span></span>
+<span class="ln">    <span class="kw">if</span> (fi<span class="op">-></span>inicio <span class="op">==</span> <span class="kw">nullptr</span>)</span>
+<span class="ln">        fi<span class="op">-></span>final <span class="op">=</span> <span class="kw">nullptr</span>;</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// libera memória do nó removido</span></span>
+<span class="ln">    <span class="kw">delete</span> no;</span>
+<span class="ln">    <span class="kw">return</span> <span class="num">1</span>;</span>
+<span class="ln">}</span></pre>
+      </div>
+
+      <!-- CONSULTA -->
+      <div class="code-panel" id="tab-consulta">
+        <pre><span class="ln"><span class="cm">// Consulta (peek) o primeiro elemento — O(1)</span></span>
+<span class="ln"><span class="kw">int</span> <span class="fn">consulta_fila</span>(<span class="type">Fila</span> fi, <span class="type">aluno</span> <span class="op">*</span>al) {</span>
+<span class="ln"></span>
+<span class="ln">    <span class="kw">if</span> (fi <span class="op">==</span> <span class="kw">nullptr</span> <span class="op">||</span> fi<span class="op">-></span>inicio <span class="op">==</span> <span class="kw">nullptr</span>)</span>
+<span class="ln">        <span class="kw">return</span> <span class="num">0</span>;</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// copia dados do primeiro nó para *al</span></span>
+<span class="ln">    <span class="op">*</span>al <span class="op">=</span> fi<span class="op">-></span>inicio<span class="op">-></span>dados;</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// NÃO remove — apenas lê</span></span>
+<span class="ln">    <span class="kw">return</span> <span class="num">1</span>;</span>
+<span class="ln">}</span></pre>
+      </div>
+
+      <!-- LIBERA -->
+      <div class="code-panel" id="tab-libera">
+        <pre><span class="ln"><span class="cm">// Libera toda a memória da fila — O(n)</span></span>
+<span class="ln"><span class="kw">void</span> <span class="fn">libera_fila</span>(<span class="type">Fila</span> fi) {</span>
+<span class="ln"></span>
+<span class="ln">    <span class="kw">if</span> (fi <span class="op">==</span> <span class="kw">nullptr</span>) <span class="kw">return</span>;</span>
+<span class="ln"></span>
+<span class="ln">    <span class="type">elemento</span> <span class="op">*</span>no;</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// percorre e desaloca nó por nó</span></span>
+<span class="ln">    <span class="kw">while</span> (fi<span class="op">-></span>inicio <span class="op">!=</span> <span class="kw">nullptr</span>) {</span>
+<span class="ln">        no <span class="op">=</span> fi<span class="op">-></span>inicio;</span>
+<span class="ln">        fi<span class="op">-></span>inicio <span class="op">=</span> fi<span class="op">-></span>inicio<span class="op">-></span>prox;</span>
+<span class="ln">        <span class="kw">delete</span> no; <span class="cm">// libera nó atual</span></span>
+<span class="ln">    }</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// libera a própria struct fila</span></span>
+<span class="ln">    <span class="kw">delete</span> fi;</span>
+<span class="ln">}</span></pre>
+      </div>
+
+      <!-- MAIN -->
+      <div class="code-panel" id="tab-main">
+        <pre><span class="ln"><span class="kw">int</span> <span class="fn">main</span>() {</span>
+<span class="ln">    <span class="cm">// dados de exemplo</span></span>
+<span class="ln">    <span class="type">aluno</span> a[<span class="num">4</span>] <span class="op">=</span> {</span>
+<span class="ln">        {<span class="num">1</span>, <span class="str">"Andre"</span>,   <span class="num">9.5</span>, <span class="num">7.8</span>, <span class="num">8.5</span>},</span>
+<span class="ln">        {<span class="num">2</span>, <span class="str">"Ricardo"</span>, <span class="num">7.5</span>, <span class="num">8.7</span>, <span class="num">6.8</span>},</span>
+<span class="ln">        {<span class="num">3</span>, <span class="str">"Bianca"</span>,  <span class="num">9.7</span>, <span class="num">6.7</span>, <span class="num">8.4</span>},</span>
+<span class="ln">        {<span class="num">4</span>, <span class="str">"Ana"</span>,     <span class="num">5.7</span>, <span class="num">6.1</span>, <span class="num">7.4</span>}</span>
+<span class="ln">    };</span>
+<span class="ln"></span>
+<span class="ln">    <span class="type">Fila</span> fi <span class="op">=</span> <span class="fn">cria_fila</span>(); <span class="cm">// aloca fila vazia</span></span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// insere 4 alunos na fila</span></span>
+<span class="ln">    <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op"><</span> <span class="num">4</span>; i<span class="op">++</span>)</span>
+<span class="ln">        <span class="fn">insere_fila</span>(fi, a[i]);</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// consulta quem está no início</span></span>
+<span class="ln">    <span class="type">aluno</span> aux;</span>
+<span class="ln">    <span class="kw">if</span> (<span class="fn">consulta_fila</span>(fi, <span class="op">&</span>aux))</span>
+<span class="ln">        cout <span class="op"><<</span> <span class="str">"Primeiro: "</span> <span class="op"><<</span> aux.nome;</span>
+<span class="ln"></span>
+<span class="ln">    <span class="cm">// remove todos — ordem FIFO</span></span>
+<span class="ln">    <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op"><</span> <span class="num">4</span>; i<span class="op">++</span>)</span>
+<span class="ln">        <span class="fn">remove_fila</span>(fi);</span>
+<span class="ln"></span>
+<span class="ln">    <span class="fn">libera_fila</span>(fi); <span class="cm">// sem vazamento!</span></span>
+<span class="ln">    <span class="kw">return</span> <span class="num">0</span>;</span>
+<span class="ln">}</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ═══════════════════════════════ FOOTER ════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <p>Fila Encadeada — <strong>Estruturas de Dados · C++</strong></p>
+    <p style="margin-top:.5rem; color:#475569;">Prof. <strong>Clayton Kossoski</strong> · Universidade Tecnológica Federal do Paraná — <strong>UTFPR</strong></p>
+    <p style="margin-top:.4rem; color:#94a3b8; font-size:.75rem;">insere no final · remove no início · O(1) por operação</p>
+  </div>
+</footer>
+
+<script>
+/* ── REVEAL ON SCROLL ── */
+const reveals = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: .15 });
+reveals.forEach(el => io.observe(el));
+
+/* ── CODE TABS ── */
+function switchTab(name) {
+  document.querySelectorAll('.code-tab').forEach((t,i) => {
+    const ids = ['insere','remove','consulta','libera','main'];
+    t.classList.toggle('active', ids[i] === name);
+  });
+  document.querySelectorAll('.code-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'tab-' + name);
+  });
+}
+
+/* ── QUEUE VISUALIZER ── */
+let queue = [];
+let idCounter = 1;
+
+function setStatus(msg, color='var(--yellow)') {
+  const el = document.getElementById('status-msg');
+  el.style.color = color;
+  el.textContent = msg;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.textContent = '', 3000);
+}
+
+function renderQueue() {
+  const wrap = document.getElementById('queue-container');
+  const sizeEl = document.getElementById('size-label');
+  sizeEl.textContent = queue.length + (queue.length === 1 ? ' elemento' : ' elementos');
+
+  if (queue.length === 0) {
+    wrap.innerHTML = '<div style="font-family:var(--font-mono);font-size:.85rem;color:var(--muted);">[ fila vazia — inicio = nullptr, final = nullptr ]</div>';
+    return;
+  }
+
+  let html = '<div style="display:flex;flex-wrap:nowrap;align-items:center;gap:0;overflow-x:auto;padding:.25rem 0;">';
+  queue.forEach((item, i) => {
+    const isFirst = i === 0;
+    const isLast  = i === queue.length - 1;
+    const cls = isFirst && isLast ? 'first last' : isFirst ? 'first' : isLast ? 'last' : '';
+    const delay = i * .06;
+
+    html += `<div class="q-node" style="animation-delay:${delay}s">`;
+    html += `<div class="q-box ${cls}">`;
+    html += `<div class="q-mat">#${item.id}</div>`;
+    html += `<div class="q-name">${item.name}</div>`;
+    html += `<div class="q-notes">prox ${isLast ? '= nullptr' : '→'}</div>`;
+    html += `</div>`;
+    if (isFirst) html += `<div class="badge-ptr bp-start" style="font-family:var(--font-mono);font-size:.55rem;padding:.15rem .4rem;border-radius:.2rem;margin-top:.3rem;background:rgba(34,211,164,.15);color:var(--green)">inicio</div>`;
+    if (isLast && !isFirst) html += `<div class="badge-ptr bp-end" style="font-family:var(--font-mono);font-size:.55rem;padding:.15rem .4rem;border-radius:.2rem;margin-top:.3rem;background:rgba(255,107,53,.15);color:var(--accent2)">final</div>`;
+    if (isFirst && isLast) { /* single shown above */ }
+    html += `</div>`;
+
+    if (!isLast) {
+      html += `<div class="q-ptr"><svg width="36" height="20"><line x1="0" y1="10" x2="28" y2="10" stroke="#1f2d45" stroke-width="1.5" stroke-dasharray="4,3"/><polygon points="28,6 36,10 28,14" fill="#1f2d45"/></svg></div>`;
+    } else {
+      html += `<div class="q-ptr"><svg width="36" height="20"><line x1="0" y1="10" x2="28" y2="10" stroke="#3d1a22" stroke-width="1.5" stroke-dasharray="4,3"/></svg></div>`;
+      html += `<div class="q-null">nullptr</div>`;
+    }
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function enqueue() {
+  const inp = document.getElementById('inp-name');
+  const name = inp.value.trim() || 'Aluno' + idCounter;
+  if (queue.length >= 8) { setStatus('⚠ Limite do visualizador atingido (8 nós)', 'var(--red)'); return; }
+  queue.push({ id: idCounter++, name });
+  inp.value = '';
+  renderQueue();
+  setStatus(`✓ ENQUEUE: "${name}" inserido no final`, 'var(--green)');
+}
+
+function dequeue() {
+  if (queue.length === 0) { setStatus('✗ Fila vazia — nada para remover', 'var(--red)'); return; }
+  const removed = queue.shift();
+  renderQueue();
+  setStatus(`✓ DEQUEUE: "${removed.name}" removido do início`, 'var(--accent2)');
+}
+
+function peek() {
+  if (queue.length === 0) { setStatus('✗ Fila vazia — peek falhou', 'var(--red)'); return; }
+  const front = queue[0];
+  setStatus(`👁 PEEK: primeiro é "${front.name}" (id #${front.id})`, 'var(--accent)');
+  const boxes = document.querySelectorAll('.q-box.first');
+  boxes.forEach(b => { b.classList.add('pulse'); setTimeout(()=>b.classList.remove('pulse'), 1600); });
+}
+
+/* input enter */
+document.getElementById('inp-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') enqueue();
+});
+
+renderQueue();
+</script>
+</body>
+</html>
