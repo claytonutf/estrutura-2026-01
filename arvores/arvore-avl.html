@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Árvore AVL — Estruturas de Dados</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --surface: #F5F7FA;
+    --surface2: #EBF0F7;
+    --border: #D1D9E6;
+    --accent: #0EA574;
+    --accent-dim: rgba(14,165,116,0.10);
+    --warn: #D97706;
+    --warn-dim: rgba(217,119,6,0.12);
+    --node: #2563EB;
+    --node-dim: rgba(37,99,235,0.10);
+    --text: #111827;
+    --text-muted: #6B7280;
+    --red: #DC2626;
+    --green: #0EA574;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(14,165,116,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(14,165,116,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(14,165,116,0.07) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--accent);
+    padding: 0.3rem 1rem;
+    border-radius: 2rem;
+    display: inline-block;
+  }
+
+  .hero h1 {
+    font-family: var(--mono);
+    font-size: clamp(3rem, 10vw, 7rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    position: relative;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero-sub {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 520px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .stat { text-align: center; }
+  .stat-val {
+    font-family: var(--mono);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+  }
+  .stat-lbl {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  .scroll-hint svg { width: 20px; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  section { padding: 5rem 0; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+
+  h2 span { color: var(--accent); }
+
+  .lead {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    max-width: 640px;
+    margin-bottom: 3rem;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+
+  /* ── CONCEITO ── */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .concept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .concept-card:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+  }
+
+  .concept-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .concept-card h3 {
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  .concept-card p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  /* ── FB TABLE ── */
+  .fb-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-top: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .fb-formula {
+    font-family: var(--mono);
+    font-size: 1.3rem;
+    color: var(--text);
+  }
+
+  .fb-formula .op { color: var(--accent); }
+
+  .fb-values {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .fb-chip {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+
+  .fb-chip.ok { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+  .fb-chip.warn { color: var(--warn); border-color: var(--warn); background: var(--warn-dim); }
+
+  /* ── ROTAÇÕES ── */
+  .rotations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .rot-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .rot-card:hover, .rot-card.active {
+    border-color: var(--accent);
+    background: var(--surface2);
+  }
+
+  .rot-badge {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--bg);
+    background: var(--accent);
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+  }
+
+  .rot-badge.rr { background: var(--node); }
+  .rot-badge.lr { background: var(--warn); }
+  .rot-badge.rl { background: var(--red); }
+
+  .rot-card h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+
+  .rot-card p { font-size: 0.82rem; color: var(--text-muted); }
+
+  .rot-detail {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 1.5rem;
+    display: none;
+  }
+  .rot-detail.visible { display: block; }
+
+  .rot-detail h4 {
+    font-family: var(--mono);
+    font-size: 1rem;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  .rot-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .rot-tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .rot-tree .node-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .mini-node {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 2px solid;
+    transition: all 0.3s;
+  }
+
+  .mini-node.blue { background: var(--node-dim); border-color: var(--node); color: var(--node); }
+  .mini-node.green { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .mini-node.warn { background: var(--warn-dim); border-color: var(--warn); color: var(--warn); }
+  .mini-node.red { background: rgba(255,107,107,0.12); border-color: var(--red); color: var(--red); }
+
+  .arrow-right { font-size: 1.5rem; color: var(--accent); padding: 0 0.5rem; }
+
+  .rot-conditions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  .cond-pill {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  .cond-pill span { color: var(--accent); }
+
+  /* ── DECISION TABLE ── */
+  .decision-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    font-family: var(--mono);
+    margin-top: 1.5rem;
+  }
+
+  .decision-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    background: var(--surface2);
+    color: var(--accent);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .decision-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(42,58,78,0.5);
+    color: var(--text-muted);
+  }
+
+  .decision-table tr:hover td { background: var(--surface2); }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 4px;
+    font-weight: 700;
+    color: var(--bg);
+  }
+  .tag.ll { background: var(--accent); }
+  .tag.rr { background: var(--node); }
+  .tag.lr { background: var(--warn); }
+  .tag.rl { background: var(--red); }
+
+  /* ── VISUALIZADOR ── */
+  #visualizer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .viz-toolbar {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--surface2);
+  }
+
+  .viz-toolbar label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+
+  .viz-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    width: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .viz-input:focus { border-color: var(--accent); }
+
+  .viz-btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .viz-btn.insert {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .viz-btn.insert:hover { background: #00c98a; }
+
+  .viz-btn.remove {
+    background: transparent;
+    border: 1px solid var(--red);
+    color: var(--red);
+  }
+  .viz-btn.remove:hover { background: rgba(255,107,107,0.12); }
+
+  .viz-btn.reset {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .viz-btn.reset:hover { border-color: var(--text-muted); color: var(--text); }
+
+  .quick-insert {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+  }
+
+  .quick-btn {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .quick-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  #treeCanvas {
+    width: 100%;
+    height: 420px;
+    display: block;
+    background: var(--bg);
+  }
+
+  .viz-log {
+    padding: 0.75rem 1.5rem;
+    border-top: 1px solid var(--border);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .log-icon { font-size: 1rem; }
+  .log-msg {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+  .log-msg.ok { color: var(--accent); }
+  .log-msg.warn { color: var(--warn); }
+  .log-msg.err { color: var(--red); }
+
+  /* ── COMPLEXIDADE ── */
+  .complexity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .cx-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .cx-op {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+
+  .cx-val {
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.25rem;
+  }
+
+  .cx-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(255,255,255,0.90);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 0 2rem;
+    height: 52px;
+  }
+
+  .nav-logo {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  nav a {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--text); }
+
+  .nav-links { display: flex; gap: 1.5rem; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0;
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: #F0F4F8;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.8;
+    color: #374151;
+    overflow-x: auto;
+    margin-top: 1rem;
+  }
+
+  .code-block .kw { color: #7C3AED; }
+  .code-block .fn { color: #1D4ED8; }
+  .code-block .cm { color: #9CA3AF; font-style: italic; }
+  .code-block .str { color: var(--accent); }
+  .code-block .num { color: var(--warn); }
+
+  @media (max-width: 600px) {
+    .viz-toolbar { gap: 0.5rem; }
+    .quick-insert { margin-left: 0; }
+    nav .nav-links { display: none; }
+    #treeCanvas { height: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">AVL</a>
+  <div class="nav-links">
+    <a href="#conceitos">Conceitos</a>
+    <a href="#rotacoes">Rotações</a>
+    <a href="#visualizador">Visualizador</a>
+    <a href="#complexidade">Complexidade</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero" style="padding-top:6rem">
+  <div class="hero-grid"></div>
+  <div class="hero-eyebrow">Estruturas de Dados · Prof. André Backes</div>
+  <h1>Árvore <span>AVL</span></h1>
+  <p class="hero-sub">A primeira estrutura de dados auto-balanceada da história, criada por Adelson-Velskii e Landis em 1962.</p>
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-val">O(log N)</span>
+      <span class="stat-lbl">busca garantida</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">±1</span>
+      <span class="stat-lbl">fator de balanc.</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">4</span>
+      <span class="stat-lbl">tipos de rotação</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">1962</span>
+      <span class="stat-lbl">ano de criação</span>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M10 4v12M4 10l6 6 6-6"/>
+    </svg>
+    explorar
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ── CONCEITOS ── -->
+<section id="conceitos">
+  <div class="container">
+    <div class="section-label">// fundamentos</div>
+    <h2>Por que <span>balancear</span>?</h2>
+    <p class="lead">Algoritmos de inserção e remoção em árvores binárias comuns não garantem balanceamento. No pior caso, a árvore vira uma lista e as operações passam de O(log N) para O(N).</p>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <span class="concept-icon">⚖️</span>
+        <h3>Fator de Balanceamento</h3>
+        <p>Diferença entre a altura da sub-árvore esquerda e direita de um nó. Em uma AVL, esse valor deve ser sempre –1, 0 ou +1.</p>
+      </div>
+      <div class="concept-card">
+        <span class="concept-icon">🔁</span>
+        <h3>Rebalanceamento Local</h3>
+        <p>Apenas a parte afetada pela inserção ou remoção é rebalanceada, usando rotações simples ou duplas.</p>
+      </div>
+      <div class="concept-card">
+        <span class="concept-icon">📐</span>
+        <h3>Árvore Quase Completa</h3>
+        <p>As rotações buscam manter a árvore próxima de uma forma completa, garantindo que qualquer operação tenha custo O(log N).</p>
+      </div>
+      <div class="concept-card">
+        <span class="concept-icon">🧮</span>
+        <h3>Altura da Sub-árvore</h3>
+        <p>Se a sub-árvore for nula (NULL), sua altura é considerada –1. Caso contrário, é o valor armazenado no campo <code style="color:var(--accent)">alt</code> do nó.</p>
+      </div>
+    </div>
+
+    <div class="fb-box">
+      <div>
+        <div class="section-label" style="margin-bottom:0.25rem">// fórmula</div>
+        <div class="fb-formula">FB = <span class="op">AE</span> – <span class="op">AD</span></div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem">AE = altura sub-árvore esquerda &nbsp;·&nbsp; AD = altura sub-árvore direita</div>
+      </div>
+      <div>
+        <div class="section-label" style="margin-bottom:0.25rem">// valores válidos</div>
+        <div class="fb-values">
+          <span class="fb-chip ok">FB = –1</span>
+          <span class="fb-chip ok">FB = 0</span>
+          <span class="fb-chip ok">FB = +1</span>
+          <span class="fb-chip warn">FB = ±2 → rotação!</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── ROTAÇÕES ── -->
+<section id="rotacoes">
+  <div class="container">
+    <div class="section-label">// operações</div>
+    <h2>Os 4 tipos de <span>rotação</span></h2>
+    <p class="lead">Rotações são aplicadas no ancestral mais próximo do nó inserido/removido cujo fator de balanceamento se torna ±2. Clique em cada rotação para ver os detalhes.</p>
+
+    <div class="rotations-grid">
+      <div class="rot-card active" onclick="showRot('ll')">
+        <span class="rot-badge ll">LL</span>
+        <h3>Rotação Simples Direita</h3>
+        <p>Nó inserido na sub-árvore esquerda do filho esquerdo. Dois passos à esquerda.</p>
+      </div>
+      <div class="rot-card" onclick="showRot('rr')">
+        <span class="rot-badge rr">RR</span>
+        <h3>Rotação Simples Esquerda</h3>
+        <p>Nó inserido na sub-árvore direita do filho direito. Dois passos à direita.</p>
+      </div>
+      <div class="rot-card" onclick="showRot('lr')">
+        <span class="rot-badge lr">LR</span>
+        <h3>Rotação Dupla Direita</h3>
+        <p>Nó inserido na sub-árvore direita do filho esquerdo. RR em B + LL em A.</p>
+      </div>
+      <div class="rot-card" onclick="showRot('rl')">
+        <span class="rot-badge rl">RL</span>
+        <h3>Rotação Dupla Esquerda</h3>
+        <p>Nó inserido na sub-árvore esquerda do filho direito. LL em B + RR em A.</p>
+      </div>
+    </div>
+
+    <div id="rot-detail" class="rot-detail visible">
+      <!-- filled by JS -->
+    </div>
+
+    <div class="card" style="margin-top:2.5rem">
+      <div class="section-label" style="margin-bottom:0.5rem">// tabela de decisão</div>
+      <h3 style="font-family:var(--mono);font-size:1rem;color:var(--text);margin-bottom:0.25rem">Quando usar cada rotação</h3>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem">Sinais iguais → rotação simples. Sinais opostos → rotação dupla.</p>
+      <table class="decision-table">
+        <thead>
+          <tr>
+            <th>FB do nó A</th>
+            <th>FB do filho B</th>
+            <th>Posição</th>
+            <th>Rotação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--accent)">+2</td>
+            <td style="color:var(--accent)">+1</td>
+            <td>B = filho esq. de A · C = filho esq. de B</td>
+            <td><span class="tag ll">LL</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--node)">–2</td>
+            <td style="color:var(--node)">–1</td>
+            <td>B = filho dir. de A · C = filho dir. de B</td>
+            <td><span class="tag rr">RR</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--accent)">+2</td>
+            <td style="color:var(--red)">–1</td>
+            <td>B = filho esq. de A · C = filho dir. de B</td>
+            <td><span class="tag lr">LR</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--node)">–2</td>
+            <td style="color:var(--warn)">+1</td>
+            <td>B = filho dir. de A · C = filho esq. de B</td>
+            <td><span class="tag rl">RL</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── VISUALIZADOR ── -->
+<section id="visualizador">
+  <div class="container">
+    <div class="section-label">// interativo</div>
+    <h2>Visualizador <span>interativo</span></h2>
+    <p class="lead">Insira e remova valores para ver a árvore AVL se auto-balancear em tempo real. Nós em laranja indicam desbalanceamento antes da rotação.</p>
+
+    <div id="visualizer">
+      <div class="viz-toolbar">
+        <label for="vizInput">Valor</label>
+        <input id="vizInput" class="viz-input" type="number" placeholder="ex: 42" min="1" max="999">
+        <button class="viz-btn insert" onclick="vizInsert()">Inserir</button>
+        <button class="viz-btn remove" onclick="vizRemove()">Remover</button>
+        <button class="viz-btn reset" onclick="vizReset()">Limpar</button>
+        <div class="quick-insert">
+          <span style="font-size:0.75rem;color:var(--text-muted);align-self:center;font-family:var(--mono)">exemplos →</span>
+          <button class="quick-btn" onclick="loadExample([1,2,3,10,4,5,9,7,8,6])">Aula 11</button>
+          <button class="quick-btn" onclick="loadExample([5,3,7,1,4,6,8])">Balanceada</button>
+          <button class="quick-btn" onclick="loadExample([10,9,8,7,6,5,4,3,2,1])">Desc.</button>
+        </div>
+      </div>
+      <canvas id="treeCanvas" style="height:460px"></canvas>
+      <div class="viz-log">
+        <span class="log-icon" id="logIcon">💡</span>
+        <span class="log-msg" id="logMsg">Insira um valor para começar.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── COMPLEXIDADE ── -->
+<section id="complexidade">
+  <div class="container">
+    <div class="section-label">// análise</div>
+    <h2>Complexidade de <span>tempo</span></h2>
+    <p class="lead">Graças ao balanceamento automático, todas as operações principais são garantidas em O(log N), independente da ordem de inserção.</p>
+    <div class="complexity-grid">
+      <div class="cx-card">
+        <div class="cx-op">Busca</div>
+        <div class="cx-val">O(log N)</div>
+        <div class="cx-note">melhor, médio e pior caso</div>
+      </div>
+      <div class="cx-card">
+        <div class="cx-op">Inserção</div>
+        <div class="cx-val">O(log N)</div>
+        <div class="cx-note">inclui rotação se necessário</div>
+      </div>
+      <div class="cx-card">
+        <div class="cx-op">Remoção</div>
+        <div class="cx-val">O(log N)</div>
+        <div class="cx-note">inclui rotação se necessário</div>
+      </div>
+      <div class="cx-card">
+        <div class="cx-op">BST não balanceada</div>
+        <div class="cx-val" style="color:var(--red)">O(N)</div>
+        <div class="cx-note">pior caso: entrada ordenada</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:2.5rem">
+      <div class="section-label" style="margin-bottom:0.5rem">// implementação em C</div>
+      <h3 style="font-family:var(--mono);font-size:0.95rem;color:var(--text);margin-bottom:0.1rem">Estrutura do nó AVL</h3>
+      <div class="code-block">
+<span class="cm">// ArvoreAVL.h</span>
+<span class="kw">typedef</span> <span class="kw">struct</span> NO* ArvAVL;
+
+<span class="kw">struct</span> NO {
+    <span class="kw">int</span> info;          <span class="cm">// valor armazenado</span>
+    <span class="kw">int</span> alt;           <span class="cm">// altura dessa sub-árvore</span>
+    <span class="kw">struct</span> NO *esq;    <span class="cm">// filho esquerdo</span>
+    <span class="kw">struct</span> NO *dir;    <span class="cm">// filho direito</span>
+};
+
+<span class="cm">// Calcula altura de um nó (NULL → -1)</span>
+<span class="kw">int</span> <span class="fn">alt_NO</span>(<span class="kw">struct</span> NO* no) {
+    <span class="kw">if</span>(no == NULL) <span class="kw">return</span> <span class="num">-1</span>;
+    <span class="kw">return</span> no->alt;
+}
+
+<span class="cm">// Fator de balanceamento</span>
+<span class="kw">int</span> <span class="fn">fatorBalanceamento_NO</span>(<span class="kw">struct</span> NO* no) {
+    <span class="kw">return</span> labs(<span class="fn">alt_NO</span>(no->esq) - <span class="fn">alt_NO</span>(no->dir));
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Material baseado nas aulas do <strong style="color:var(--text)">Prof. André Backes</strong> · Árvore AVL · Adelson-Velskii &amp; Landis, 1962</p>
+  <p style="margin-top:0.4rem; font-size:0.7rem">Referências: <a href="https://youtu.be/Au-6c55J90c" target="_blank">Aula 78</a> · <a href="https://youtu.be/4eO3UbTiRyo" target="_blank">Aula 79</a> · <a href="https://youtu.be/lQsVUxa3Auk" target="_blank">Aula 83</a> · <a href="https://youtu.be/F7_Daymw-WM" target="_blank">Aula 84</a></p>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════
+   ROTATION DETAIL PANEL
+═══════════════════════════════════════ */
+const rotData = {
+  ll: {
+    label: 'LL — Rotação Simples à Direita',
+    color: 'var(--accent)',
+    desc: 'O nó desbalanceado A, seu filho B e o neto C estão todos inclinados para a esquerda. B sobe para o lugar de A, e A se torna filho direito de B.',
+    conditions: ['FB(A) = +2', 'FB(B) = +1', 'C = filho esq de B'],
+    code: `no = (*raiz)->esq;\n(*raiz)->esq = no->dir;\nno->dir = *raiz;\n*raiz = no;`,
+    before: [
+      { label:'A', cls:'warn', fb:'+2', x:1, y:0 },
+      { label:'B', cls:'blue', fb:'+1', x:0, y:1 },
+      { label:'C', cls:'green', fb:'0', x:0, y:2 },
+    ],
+    after: [
+      { label:'B', cls:'blue', fb:'0', x:1, y:0 },
+      { label:'C', cls:'green', fb:'0', x:0, y:1 },
+      { label:'A', cls:'warn', fb:'0', x:2, y:1 },
+    ],
+  },
+  rr: {
+    label: 'RR — Rotação Simples à Esquerda',
+    color: 'var(--node)',
+    desc: 'O nó desbalanceado A, seu filho B e o neto C estão todos inclinados para a direita. B sobe para o lugar de A, e A se torna filho esquerdo de B.',
+    conditions: ['FB(A) = –2', 'FB(B) = –1', 'C = filho dir de B'],
+    code: `no = (*raiz)->dir;\n(*raiz)->dir = no->esq;\nno->esq = (*raiz);\n(*raiz) = no;`,
+  },
+  lr: {
+    label: 'LR — Rotação Dupla à Direita',
+    color: 'var(--warn)',
+    desc: 'B está à esquerda de A, mas C está à direita de B (sinais opostos). Primeiro aplica-se RR em B, depois LL em A.',
+    conditions: ['FB(A) = +2', 'FB(B) = –1', 'C = filho dir de B'],
+    code: `RotacaoRR(&(*raiz)->esq);\nRotacaoLL(raiz);`,
+  },
+  rl: {
+    label: 'RL — Rotação Dupla à Esquerda',
+    color: 'var(--red)',
+    desc: 'B está à direita de A, mas C está à esquerda de B (sinais opostos). Primeiro aplica-se LL em B, depois RR em A.',
+    conditions: ['FB(A) = –2', 'FB(B) = +1', 'C = filho esq de B'],
+    code: `RotacaoLL(&(*raiz)->dir);\nRotacaoRR(raiz);`,
+  },
+};
+
+function showRot(type) {
+  document.querySelectorAll('.rot-card').forEach(c => c.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const d = rotData[type];
+  const el = document.getElementById('rot-detail');
+  el.innerHTML = `
+    <h4 style="color:${d.color}">${d.label}</h4>
+    <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:1rem">${d.desc}</p>
+    <div class="rot-conditions">
+      ${d.conditions.map(c => `<span class="cond-pill"><span>${c.split('=')[0].trim()}</span> =${c.split('=')[1] || ''}</span>`).join('')}
+    </div>
+    <div class="code-block" style="margin-top:1rem">${d.code}</div>
+  `;
+  el.classList.add('visible');
+}
+
+showRot.call({ currentTarget: document.querySelector('.rot-card') }, 'll');
+// init properly
+(function() {
+  const firstCard = document.querySelector('.rot-card');
+  const d = rotData['ll'];
+  const el = document.getElementById('rot-detail');
+  el.innerHTML = `
+    <h4 style="color:${d.color}">${d.label}</h4>
+    <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:1rem">${d.desc}</p>
+    <div class="rot-conditions">
+      ${d.conditions.map(c => `<span class="cond-pill"><span>${c.split('=')[0].trim()}</span> =${c.split('=')[1] || ''}</span>`).join('')}
+    </div>
+    <div class="code-block" style="margin-top:1rem">${d.code}</div>
+  `;
+})();
+
+function showRot(type) {
+  document.querySelectorAll('.rot-card').forEach(c => c.classList.remove('active'));
+  if(event && event.currentTarget) event.currentTarget.classList.add('active');
+  const d = rotData[type];
+  const el = document.getElementById('rot-detail');
+  el.innerHTML = `
+    <h4 style="color:${d.color}">${d.label}</h4>
+    <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:1rem">${d.desc}</p>
+    <div class="rot-conditions">
+      ${d.conditions.map(c => `<span class="cond-pill"><span>${c.split('=')[0].trim()}</span> =${c.split('=')[1] || ''}</span>`).join('')}
+    </div>
+    <div class="code-block" style="margin-top:1rem">${d.code}</div>
+  `;
+  el.classList.add('visible');
+}
+
+/* ═══════════════════════════════════════
+   AVL TREE — with rotation event tracking
+═══════════════════════════════════════ */
+class AVLNode {
+  constructor(val) {
+    this.val = val;
+    this.left = null;
+    this.right = null;
+    this.height = 0;
+    // display state (current animated position)
+    this.cx = 0; this.cy = 0;
+    // target position
+    this.tx = 0; this.ty = 0;
+    // visual state flags
+    this.isNew = false;
+    this.isUnbalanced = false;
+    this.isRotating = false;
+    this.alpha = 1;
+  }
+}
+
+class AVLTree {
+  constructor() {
+    this.root = null;
+    this.lastRotation = '';
+    this.rotationEvents = []; // [{type, nodeA, nodeB, nodeC}]
+  }
+
+  height(n) { return n ? n.height : -1; }
+  updateHeight(n) {
+    if(n) n.height = 1 + Math.max(this.height(n.left), this.height(n.right));
+  }
+  fb(n) { return n ? this.height(n.left) - this.height(n.right) : 0; }
+
+  rotLL(n) {
+    const b = n.left;
+    n.left = b.right; b.right = n;
+    this.updateHeight(n); this.updateHeight(b);
+    this.lastRotation = 'LL';
+    this.rotationEvents.push({ type: 'LL', a: n, b: b });
+    return b;
+  }
+  rotRR(n) {
+    const b = n.right;
+    n.right = b.left; b.left = n;
+    this.updateHeight(n); this.updateHeight(b);
+    this.lastRotation = 'RR';
+    this.rotationEvents.push({ type: 'RR', a: n, b: b });
+    return b;
+  }
+  rotLR(n) {
+    n.left = this.rotRR(n.left);
+    const r = this.rotLL(n);
+    if(this.rotationEvents.length >= 2) {
+      const ev1 = this.rotationEvents[this.rotationEvents.length-2];
+      const ev2 = this.rotationEvents[this.rotationEvents.length-1];
+      this.rotationEvents.splice(-2, 2, { type: 'LR', a: ev1.a, b: ev1.b, c: ev2.b });
+    }
+    this.lastRotation = 'LR';
+    return r;
+  }
+  rotRL(n) {
+    n.right = this.rotLL(n.right);
+    const r = this.rotRR(n);
+    if(this.rotationEvents.length >= 2) {
+      const ev1 = this.rotationEvents[this.rotationEvents.length-2];
+      const ev2 = this.rotationEvents[this.rotationEvents.length-1];
+      this.rotationEvents.splice(-2, 2, { type: 'RL', a: ev1.a, b: ev1.b, c: ev2.b });
+    }
+    this.lastRotation = 'RL';
+    return r;
+  }
+
+  balance(n) {
+    this.updateHeight(n);
+    const f = this.fb(n);
+    if(f >= 2)  return this.fb(n.left) >= 0  ? this.rotLL(n) : this.rotLR(n);
+    if(f <= -2) return this.fb(n.right) <= 0 ? this.rotRR(n) : this.rotRL(n);
+    return n;
+  }
+
+  insert(n, val) {
+    if(!n) { const nd = new AVLNode(val); nd.isNew = true; return nd; }
+    if(val < n.val) n.left  = this.insert(n.left,  val);
+    else if(val > n.val) n.right = this.insert(n.right, val);
+    else return n;
+    return this.balance(n);
+  }
+
+  minNode(n) { return n.left ? this.minNode(n.left) : n; }
+
+  remove(n, val) {
+    if(!n) return null;
+    if(val < n.val) n.left  = this.remove(n.left,  val);
+    else if(val > n.val) n.right = this.remove(n.right, val);
+    else {
+      if(!n.left || !n.right) return n.left || n.right;
+      const mn = this.minNode(n.right);
+      n.val = mn.val;
+      n.right = this.remove(n.right, mn.val);
+    }
+    return this.balance(n);
+  }
+
+  add(val) {
+    this.lastRotation = '';
+    this.rotationEvents = [];
+    this.root = this.insert(this.root, val);
+  }
+
+  del(val) {
+    this.lastRotation = '';
+    this.rotationEvents = [];
+    this.root = this.remove(this.root, val);
+  }
+}
+
+/* ═══════════════════════════════════════
+   CANVAS + ANIMATION ENGINE
+═══════════════════════════════════════ */
+const canvas = document.getElementById('treeCanvas');
+const ctx = canvas.getContext('2d');
+const tree = new AVLTree();
+
+const NODE_R = 22;
+const LEVEL_H = 76;
+const EASE = 0.10; // interpolation speed per frame
+
+const C = {
+  accent:    '#0EA574',
+  node:      '#2563EB',
+  nodeFill:  '#EFF6FF',
+  warn:      '#D97706',
+  warnFill:  '#FFFBEB',
+  red:       '#DC2626',
+  redFill:   '#FEF2F2',
+  newNode:   '#7C3AED',
+  newFill:   '#F5F3FF',
+  rotating:  '#059669',
+  rotFill:   '#ECFDF5',
+  border:    '#D1D9E6',
+  text:      '#111827',
+  muted:     '#6B7280',
+  bg:        '#FFFFFF',
+  edge:      '#CBD5E1',
+  edgeAnim:  '#34D399',
+};
+
+// Animation phases:
+// 'idle' | 'flash-unbal' | 'animate-rotate' | 'flash-done'
+let animPhase = 'idle';
+let animT = 0;           // general timer (frames)
+let animRAF = null;
+let pendingRotEvents = [];
+let allNodes = new Set();  // track all node objects for position updates
+let isAnimating = false;
+
+// Snapshot of positions BEFORE rotation (for interpolation)
+let preRotPositions = new Map();
+// Snapshot of positions AFTER rotation (targets)
+let postRotPositions = new Map();
+// Which nodes are involved in rotation
+let rotatingNodes = new Set();
+let unbalancedNode = null;
+
+function getAllNodes(root) {
+  const nodes = [];
+  function walk(n) { if(!n) return; nodes.push(n); walk(n.left); walk(n.right); }
+  walk(root);
+  return nodes;
+}
+
+function computePositions(n, depth, lo, hi, out) {
+  if(!n) return;
+  const mx = (lo + hi) / 2;
+  out.set(n, { x: mx, y: depth * LEVEL_H + NODE_R + 20 });
+  computePositions(n.left,  depth+1, lo, mx, out);
+  computePositions(n.right, depth+1, mx, hi, out);
+}
+
+// Assign current cx,cy to nodes (snapping or animated)
+function snapPositions(root) {
+  const pos = new Map();
+  computePositions(root, 0, 0, canvas.width, pos);
+  pos.forEach((p, n) => { n.cx = p.x; n.cy = p.y; n.tx = p.x; n.ty = p.y; });
+}
+
+function setTargetPositions(root) {
+  const pos = new Map();
+  computePositions(root, 0, 0, canvas.width, pos);
+  pos.forEach((p, n) => { n.tx = p.x; n.ty = p.y; });
+}
+
+/* ── DRAW ── */
+function drawFrame() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if(!tree.root) {
+    ctx.fillStyle = C.muted;
+    ctx.font = '14px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Árvore vazia — insira um valor para começar', W/2, H/2);
+    return;
+  }
+
+  const nodes = getAllNodes(tree.root);
+
+  // Lerp all nodes toward target
+  let moving = false;
+  nodes.forEach(n => {
+    const dx = n.tx - n.cx, dy = n.ty - n.cy;
+    if(Math.abs(dx) > 0.3 || Math.abs(dy) > 0.3) {
+      n.cx += dx * EASE;
+      n.cy += dy * EASE;
+      moving = true;
+    } else {
+      n.cx = n.tx; n.cy = n.ty;
+    }
+  });
+
+  // Draw edges first
+  function drawEdges(n) {
+    if(!n) return;
+    const isRot = rotatingNodes.has(n);
+    if(n.left) {
+      const edgeColor = (isRot || rotatingNodes.has(n.left)) ? C.edgeAnim : C.edge;
+      const lw = (isRot || rotatingNodes.has(n.left)) ? 2.5 : 1.5;
+      ctx.beginPath();
+      ctx.moveTo(n.cx, n.cy);
+      ctx.lineTo(n.left.cx, n.left.cy);
+      ctx.strokeStyle = edgeColor;
+      ctx.lineWidth = lw;
+      ctx.stroke();
+      drawEdges(n.left);
+    }
+    if(n.right) {
+      const edgeColor = (isRot || rotatingNodes.has(n.right)) ? C.edgeAnim : C.edge;
+      const lw = (isRot || rotatingNodes.has(n.right)) ? 2.5 : 1.5;
+      ctx.beginPath();
+      ctx.moveTo(n.cx, n.cy);
+      ctx.lineTo(n.right.cx, n.right.cy);
+      ctx.strokeStyle = edgeColor;
+      ctx.lineWidth = lw;
+      ctx.stroke();
+      drawEdges(n.right);
+    }
+  }
+  drawEdges(tree.root);
+
+  // Draw nodes
+  nodes.forEach(n => {
+    const f = tree.fb(n);
+    let stroke, fill, label;
+
+    if(rotatingNodes.has(n)) {
+      stroke = C.rotating; fill = C.rotFill; label = C.rotating;
+    } else if(n.isNew) {
+      stroke = C.newNode; fill = C.newFill; label = C.newNode;
+    } else if(n === unbalancedNode && animPhase === 'flash-unbal') {
+      const pulse = 0.5 + 0.5 * Math.sin(animT * 0.25);
+      stroke = C.warn; fill = C.warnFill; label = C.warn;
+      // pulsing ring
+      ctx.beginPath();
+      ctx.arc(n.cx, n.cy, NODE_R + 6 + pulse * 4, 0, Math.PI*2);
+      ctx.strokeStyle = C.warn + '55';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    } else {
+      stroke = C.node; fill = C.nodeFill; label = C.node;
+    }
+
+    // Shadow for rotating nodes
+    if(rotatingNodes.has(n)) {
+      ctx.shadowColor = C.rotating + '44';
+      ctx.shadowBlur = 12;
+    }
+
+    ctx.beginPath();
+    ctx.arc(n.cx, n.cy, NODE_R, 0, Math.PI*2);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = rotatingNodes.has(n) ? 2.5 : 2;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = label;
+    ctx.font = 'bold 13px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n.val, n.cx, n.cy);
+
+    // fb badge
+    const fbStr = (f >= 0 ? '+' : '') + f;
+    const fbColor = Math.abs(f) >= 2 ? C.warn : (Math.abs(f) === 1 ? C.muted : C.accent);
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.fillStyle = fbColor;
+    ctx.fillText('fb=' + fbStr, n.cx, n.cy + NODE_R + 9);
+  });
+
+  return moving;
+}
+
+/* ── ANIMATION LOOP ── */
+function animLoop() {
+  animT++;
+  const stillMoving = drawFrame();
+
+  if(animPhase === 'flash-unbal') {
+    if(animT >= 40) { // ~0.66s flash
+      animPhase = 'animate-rotate';
+      animT = 0;
+      // Now apply the rotation and set targets
+      rotatingNodes.forEach(n => n.isRotating = true);
+      setTargetPositions(tree.root);
+    }
+    animRAF = requestAnimationFrame(animLoop);
+
+  } else if(animPhase === 'animate-rotate') {
+    if(!stillMoving || animT > 90) { // movement done or timeout
+      animPhase = 'flash-done';
+      animT = 0;
+      rotatingNodes.forEach(n => { n.isRotating = false; });
+      rotatingNodes.clear();
+      unbalancedNode = null;
+    }
+    animRAF = requestAnimationFrame(animLoop);
+
+  } else if(animPhase === 'flash-done') {
+    if(animT >= 20) {
+      animPhase = 'idle';
+      isAnimating = false;
+      getAllNodes(tree.root).forEach(n => { n.isNew = false; });
+      return; // stop loop
+    }
+    animRAF = requestAnimationFrame(animLoop);
+
+  } else {
+    // idle: keep running only if nodes are still moving
+    if(stillMoving) {
+      animRAF = requestAnimationFrame(animLoop);
+    } else {
+      isAnimating = false;
+      getAllNodes(tree.root).forEach(n => { n.isNew = false; });
+    }
+  }
+}
+
+function startAnimLoop() {
+  if(animRAF) cancelAnimationFrame(animRAF);
+  animRAF = requestAnimationFrame(animLoop);
+}
+
+/* ── PERFORM OPERATION WITH ANIMATION ── */
+function performWithAnimation(opFn, logFn) {
+  if(isAnimating) return; // block during animation
+  isAnimating = true;
+  animT = 0;
+  rotatingNodes.clear();
+  unbalancedNode = null;
+
+  // Take snapshot of pre-operation node positions
+  const preNodes = new Set(getAllNodes(tree.root));
+  const prePos = new Map();
+  getAllNodes(tree.root).forEach(n => prePos.set(n, { x: n.cx, y: n.cy }));
+
+  // Run the actual operation
+  opFn();
+
+  const rot = tree.lastRotation;
+  const rotEvents = tree.rotationEvents;
+  logFn(rot);
+
+  // Resize canvas first
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = parseInt(canvas.style.height || '420');
+
+  // New nodes: place them at parent position initially, will lerp to target
+  const allCurrent = getAllNodes(tree.root);
+  allCurrent.forEach(n => {
+    if(!prePos.has(n)) {
+      // Brand new node: start at root position
+      if(tree.root) { n.cx = tree.root.cx || canvas.width/2; n.cy = tree.root.cy || 20; }
+    } else {
+      const p = prePos.get(n);
+      n.cx = p.x; n.cy = p.y;
+    }
+  });
+
+  if(rot && rotEvents.length > 0) {
+    // Mark involved nodes
+    const ev = rotEvents[0];
+    if(ev.a) { rotatingNodes.add(ev.a); unbalancedNode = ev.a; }
+    if(ev.b) rotatingNodes.add(ev.b);
+    if(ev.c) rotatingNodes.add(ev.c);
+
+    animPhase = 'flash-unbal';
+    animT = 0;
+    // Set targets to CURRENT positions first (hold), then update after flash
+    setTargetPositions(tree.root);
+    // Override: keep pre-rotation targets so nodes don't move yet
+    allCurrent.forEach(n => { n.tx = n.cx; n.ty = n.cy; });
+
+  } else {
+    // No rotation: just animate new positions
+    animPhase = 'idle';
+    setTargetPositions(tree.root);
+  }
+
+  startAnimLoop();
+}
+
+/* ── RESIZE ── */
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = parseInt(canvas.style.height || '420');
+  if(!isAnimating) {
+    snapPositions(tree.root);
+    drawFrame();
+  }
+}
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  if(!isAnimating && tree.root) setTargetPositions(tree.root);
+});
+setTimeout(resizeCanvas, 100);
+
+/* ═══════════════════════════════════════
+   UI CONTROLS
+═══════════════════════════════════════ */
+function log(msg, type='') {
+  const el = document.getElementById('logMsg');
+  el.textContent = msg;
+  el.className = 'log-msg ' + type;
+}
+
+function getInput() {
+  const v = parseInt(document.getElementById('vizInput').value);
+  return isNaN(v) ? null : v;
+}
+
+const ROT_LABELS = {
+  LL: 'Rotação LL (simples à direita) — filho esquerdo sobe',
+  RR: 'Rotação RR (simples à esquerda) — filho direito sobe',
+  LR: 'Rotação LR (dupla à direita) — RR no filho, depois LL na raiz',
+  RL: 'Rotação RL (dupla à esquerda) — LL no filho, depois RR na raiz',
+};
+
+function vizInsert() {
+  const v = getInput();
+  if(v === null) { log('Digite um número válido.', 'err'); return; }
+  if(isAnimating) { log('Aguarde a animação terminar.', 'err'); return; }
+  document.getElementById('vizInput').value = '';
+
+  performWithAnimation(
+    () => tree.add(v),
+    (rot) => {
+      if(rot) log(`Inserido ${v}. ⟳ ${ROT_LABELS[rot]}`, 'warn');
+      else    log(`Inserido ${v}. Árvore já balanceada — nenhuma rotação necessária.`, 'ok');
+    }
+  );
+}
+
+function vizRemove() {
+  const v = getInput();
+  if(v === null) { log('Digite um número válido.', 'err'); return; }
+  if(isAnimating) { log('Aguarde a animação terminar.', 'err'); return; }
+  document.getElementById('vizInput').value = '';
+
+  performWithAnimation(
+    () => tree.del(v),
+    (rot) => {
+      if(rot) log(`Removido ${v}. ⟳ ${ROT_LABELS[rot]}`, 'warn');
+      else    log(`Removido ${v}.`, 'ok');
+    }
+  );
+}
+
+function vizReset() {
+  if(animRAF) cancelAnimationFrame(animRAF);
+  isAnimating = false; animPhase = 'idle';
+  rotatingNodes.clear(); unbalancedNode = null;
+  tree.root = null;
+  log('Árvore limpa.');
+  resizeCanvas();
+}
+
+function loadExample(arr) {
+  if(animRAF) cancelAnimationFrame(animRAF);
+  isAnimating = false; animPhase = 'idle';
+  rotatingNodes.clear(); unbalancedNode = null;
+  tree.root = null;
+  arr.forEach(v => tree.add(v));
+  log(`Exemplo carregado: [${arr.join(', ')}] — ${arr.length} nós inseridos.`, 'ok');
+  resizeCanvas();
+  snapPositions(tree.root);
+  drawFrame();
+}
+
+document.getElementById('vizInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') vizInsert();
+});
+
+// Load default example
+loadExample([1,2,3,10,4,5,9,7,8,6]);
+</script>
+</body>
+</html>
