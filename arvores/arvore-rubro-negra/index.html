@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Árvore Rubro-Negra — UTFPR</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #C0392B;
+    --red-light: #FDECEA;
+    --red-mid: #E74C3C;
+    --black-node: #1a1a2e;
+    --black-node-light: #2d2d44;
+    --accent: #C0392B;
+    --bg: #FAFAF8;
+    --bg2: #F3F2EE;
+    --bg3: #ECEAE4;
+    --text: #1C1B18;
+    --text2: #555450;
+    --text3: #888680;
+    --border: #E0DFDB;
+    --border2: #D0CFCA;
+    --white: #FFFFFF;
+    --green: #1E8449;
+    --green-light: #E9F7EF;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    gap: 1rem;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-pill {
+    background: var(--red);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    padding: 3px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .header-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .header-right {
+    font-size: 12px;
+    color: var(--text3);
+    text-align: right;
+    line-height: 1.4;
+  }
+  .header-right strong { color: var(--text2); font-weight: 500; }
+
+  nav {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+  nav a {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text3);
+    text-decoration: none;
+    padding: 10px 14px;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  nav a:hover { color: var(--text); border-color: var(--border2); }
+  nav a.active { color: var(--red); border-color: var(--red); }
+
+  /* ── Layout ── */
+  .main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+  /* ── Hero ── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    padding: 3rem 0 4rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4rem;
+  }
+  .hero-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--red);
+    margin-bottom: .75rem;
+  }
+  .hero h1 {
+    font-size: 2.75rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 1rem;
+    letter-spacing: -.02em;
+  }
+  .hero h1 span { color: var(--red); }
+  .hero p {
+    font-size: 16px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+  .hero-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+  .badge-red { background: var(--red-light); color: var(--red); border-color: #F5C6C2; }
+  .badge-gray { background: var(--bg2); color: var(--text2); border-color: var(--border); }
+  .badge-green { background: var(--green-light); color: var(--green); border-color: #A9DFBF; }
+
+  /* Hero tree visual */
+  .hero-visual { display: flex; align-items: center; justify-content: center; }
+  .hero-svg { width: 100%; max-width: 360px; }
+
+  /* ── Section titles ── */
+  .section { margin-bottom: 4rem; }
+  .section-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--text3);
+    margin-bottom: .5rem;
+  }
+  .section-title {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -.02em;
+    margin-bottom: .75rem;
+    line-height: 1.25;
+  }
+  .section-subtitle {
+    font-size: 15px;
+    color: var(--text2);
+    max-width: 640px;
+    margin-bottom: 2rem;
+  }
+
+  /* ── Property cards ── */
+  .props-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 1rem;
+  }
+  .prop-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1.25rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    box-shadow: var(--shadow);
+    transition: box-shadow .15s, transform .15s;
+  }
+  .prop-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+  .prop-num {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .prop-num.red { background: var(--red-light); color: var(--red); }
+  .prop-num.dark { background: #e8e7e2; color: var(--black-node); }
+  .prop-body h3 { font-size: 14px; font-weight: 600; margin-bottom: .3rem; color: var(--text); }
+  .prop-body p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  /* ── AVL comparison ── */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .compare-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .compare-card.featured { border-color: #E0A8A5; }
+  .compare-header {
+    padding: .875rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+  }
+  .compare-header h3 { font-size: 15px; font-weight: 600; }
+  .compare-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .compare-icon.avl { background: #EBF3FB; }
+  .compare-icon.rb { background: var(--red-light); }
+  .compare-rows { padding: .5rem 0; }
+  .compare-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .6rem 1.25rem;
+    font-size: 13px;
+    border-bottom: 1px solid var(--bg2);
+  }
+  .compare-row:last-child { border-bottom: none; }
+  .compare-row .label { color: var(--text3); }
+  .compare-row .val { font-weight: 500; color: var(--text); font-family: var(--mono); font-size: 12px; }
+  .compare-row .val.good { color: var(--green); }
+  .compare-row .val.badge-inline {
+    background: var(--red-light);
+    color: var(--red);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+
+  /* ── Rotations visual ── */
+  .rotations-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .rotation-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .rotation-card h3 { font-size: 15px; font-weight: 600; margin-bottom: .4rem; }
+  .rotation-card p { font-size: 13px; color: var(--text2); margin-bottom: 1rem; line-height: 1.5; }
+  .rotation-svg { width: 100%; }
+  .code-block {
+    background: #1a1a2e;
+    color: #e8e6f0;
+    border-radius: var(--r-md);
+    padding: 1rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    margin-top: 1rem;
+    overflow-x: auto;
+  }
+  .code-block .kw { color: #bb86fc; }
+  .code-block .fn { color: #82b1ff; }
+  .code-block .type { color: #80cbc4; }
+  .code-block .cmt { color: #7c7a96; }
+  .code-block .str { color: #a5d6a7; }
+
+  /* ── Interactive Demo ── */
+  .demo-wrap {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+  .demo-toolbar {
+    padding: 1rem 1.25rem;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: center;
+  }
+  .demo-toolbar label { font-size: 13px; font-weight: 500; color: var(--text2); }
+  .demo-input {
+    padding: 6px 10px;
+    border: 1px solid var(--border2);
+    border-radius: var(--r-sm);
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--white);
+    color: var(--text);
+    width: 72px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .demo-input:focus { border-color: var(--red); }
+  .demo-btn {
+    padding: 6px 14px;
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all .15s;
+  }
+  .btn-primary {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+  }
+  .btn-primary:hover { background: #a93226; }
+  .btn-secondary {
+    background: var(--white);
+    color: var(--text);
+    border-color: var(--border2);
+  }
+  .btn-secondary:hover { background: var(--bg2); }
+  .btn-danger {
+    background: var(--white);
+    color: var(--red);
+    border-color: #F5C6C2;
+  }
+  .btn-danger:hover { background: var(--red-light); }
+  .spacer { flex: 1; }
+
+  .canvas-wrap {
+    position: relative;
+    overflow: hidden;
+    background: var(--white);
+    touch-action: none;
+  }
+  #tree-canvas {
+    width: 100%;
+    min-height: 320px;
+    display: block;
+    cursor: grab;
+  }
+  #tree-canvas.dragging { cursor: grabbing; }
+
+  .zoom-controls {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 5;
+  }
+  .zoom-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.95);
+    border: 1px solid var(--border2);
+    box-shadow: var(--shadow);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, color .15s;
+    line-height: 1;
+    user-select: none;
+  }
+  .zoom-btn:hover { background: var(--bg2); color: var(--text); }
+  .zoom-btn:active { background: var(--border); }
+  .zoom-level {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    text-align: center;
+    background: rgba(255,255,255,0.95);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 2px 0;
+  }
+
+  .demo-log {
+    padding: .75rem 1.25rem;
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text2);
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .log-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .log-dot.insert { background: var(--green); }
+  .log-dot.rotate { background: #2980B9; }
+  .log-dot.recolor { background: #E67E22; }
+  .log-dot.remove { background: var(--red); }
+  .log-dot.info { background: var(--text3); }
+
+  .demo-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--border);
+  }
+  .stat { padding: .75rem 1.25rem; border-right: 1px solid var(--border); }
+  .stat:last-child { border-right: none; }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+  .stat-val { font-size: 22px; font-weight: 700; color: var(--text); font-family: var(--mono); line-height: 1.2; }
+  .stat-val.red { color: var(--red); }
+  .stat-val.dark { color: var(--black-node); }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: .75rem 1.25rem;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
+  .legend-dot.red { background: var(--red); }
+  .legend-dot.black { background: var(--black-node); }
+
+  /* ── Applications ── */
+  .apps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .app-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1.125rem;
+    box-shadow: var(--shadow);
+  }
+  .app-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: .5rem; }
+  .app-title { font-size: 14px; font-weight: 600; margin-bottom: .25rem; }
+  .app-sub { font-size: 12px; color: var(--text3); }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    text-align: center;
+    padding: 2rem;
+    font-size: 13px;
+    color: var(--text3);
+    line-height: 1.6;
+  }
+  footer strong { color: var(--text2); font-weight: 500; }
+
+  /* ── Scrolled sections ── */
+  .section { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+  .section.visible { opacity: 1; transform: translateY(0); }
+
+  /* SVG node animations */
+  @keyframes nodeIn { from { opacity: 0; transform: scale(.5) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes colorPulse {
+    0%   { filter: brightness(1) saturate(1); }
+    35%  { filter: brightness(1.45) saturate(1.6); }
+    100% { filter: brightness(1) saturate(1); }
+  }
+  @keyframes ringFade {
+    0%   { opacity: .9; stroke-width: 4; }
+    100% { opacity: 0;  stroke-width: 0.5; }
+  }
+
+  .tree-node {
+    transition: cx 0.6s cubic-bezier(.45,0,.2,1),
+                cy 0.6s cubic-bezier(.45,0,.2,1),
+                r 0.6s cubic-bezier(.45,0,.2,1),
+                fill 0.55s ease,
+                stroke 0.55s ease;
+  }
+  .tree-edge {
+    transition: x1 0.6s cubic-bezier(.45,0,.2,1),
+                y1 0.6s cubic-bezier(.45,0,.2,1),
+                x2 0.6s cubic-bezier(.45,0,.2,1),
+                y2 0.6s cubic-bezier(.45,0,.2,1),
+                opacity 0.4s ease;
+  }
+  .tree-label {
+    transition: x 0.6s cubic-bezier(.45,0,.2,1),
+                y 0.6s cubic-bezier(.45,0,.2,1),
+                font-size 0.6s cubic-bezier(.45,0,.2,1);
+  }
+  .recolor-pulse { animation: colorPulse 0.75s ease; }
+  .recolor-ring {
+    animation: ringFade 0.75s cubic-bezier(.22,.61,.36,1) forwards;
+    pointer-events: none;
+    transition: r 0.75s cubic-bezier(.22,.61,.36,1);
+  }
+
+  @media (max-width: 700px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-visual { display: none; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .rotations-grid { grid-template-columns: 1fr; }
+    .demo-stats { grid-template-columns: 1fr 1fr; }
+    .hero h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <span class="logo-pill">UTFPR</span>
+      <span class="header-title">Estruturas de Dados · Árvore Rubro-Negra</span>
+    </div>
+    <div class="header-right">
+      <strong>Prof. Clayton Kossoski</strong><br>
+      Universidade Tecnológica Federal do Paraná
+    </div>
+  </div>
+</header>
+
+<nav>
+  <a href="#introducao" class="active">Introdução</a>
+  <a href="#propriedades">Propriedades</a>
+  <a href="#avl">AVL vs Rubro-Negra</a>
+  <a href="#rotacoes">Rotações</a>
+  <a href="#demo">Demo Interativo</a>
+  <a href="#aplicacoes">Aplicações</a>
+</nav>
+
+<div class="main">
+
+  <!-- HERO -->
+  <section class="hero" id="introducao">
+    <div>
+      <p class="hero-label">Estruturas de dados · Árvore balanceada</p>
+      <h1>Árvore<br><span>Rubro-Negra</span></h1>
+      <p>Uma árvore binária de busca auto-balanceada que usa coloração de nós para garantir complexidade <strong>O(log n)</strong> em todas as operações. Criada por Rudolf Bayer em 1972 e nomeada por Guibas &amp; Sedgewick em 1978.</p>
+      <div class="hero-badges">
+        <span class="badge badge-red">Inserção O(log n)</span>
+        <span class="badge badge-red">Remoção O(log n)</span>
+        <span class="badge badge-green">Busca O(log n)</span>
+        <span class="badge badge-gray">Max 3 rotações por remoção</span>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <svg class="hero-svg" viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg">
+        <!-- edges -->
+        <g stroke="#CBD0D8" stroke-width="1.5" fill="none">
+          <line x1="160" y1="48" x2="90" y2="108"/>
+          <line x1="160" y1="48" x2="230" y2="108"/>
+          <line x1="90" y1="108" x2="55" y2="168"/>
+          <line x1="90" y1="108" x2="125" y2="168"/>
+          <line x1="230" y1="108" x2="200" y2="168"/>
+          <line x1="230" y1="108" x2="265" y2="168"/>
+          <line x1="125" y1="168" x2="110" y2="218"/>
+          <line x1="125" y1="168" x2="140" y2="218"/>
+        </g>
+        <!-- black nodes -->
+        <g fill="#1a1a2e">
+          <circle cx="160" cy="48" r="22"/>
+          <circle cx="55" cy="168" r="18"/>
+          <circle cx="200" cy="168" r="18"/>
+          <circle cx="110" cy="218" r="14"/>
+          <circle cx="140" cy="218" r="14"/>
+        </g>
+        <!-- red nodes -->
+        <g fill="#C0392B">
+          <circle cx="90" cy="108" r="22"/>
+          <circle cx="230" cy="108" r="22"/>
+          <circle cx="125" cy="168" r="18"/>
+          <circle cx="265" cy="168" r="18"/>
+        </g>
+        <!-- labels -->
+        <g fill="white" font-family="'Inter',sans-serif" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central">
+          <text x="160" y="48">20</text>
+          <text x="90" y="108">10</text>
+          <text x="230" y="108">35</text>
+          <text x="55" y="168">5</text>
+          <text x="125" y="168">15</text>
+          <text x="200" y="168">30</text>
+          <text x="265" y="168">50</text>
+          <text x="110" y="218" font-size="11">12</text>
+          <text x="140" y="218" font-size="11">18</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- PROPERTIES -->
+  <section class="section" id="propriedades">
+    <p class="section-eyebrow">Fundamentos</p>
+    <h2 class="section-title">Propriedades da árvore</h2>
+    <p class="section-subtitle">Toda árvore rubro-negra deve satisfazer simultaneamente todas estas propriedades. Qualquer violação exige correção por rotação ou troca de cor.</p>
+    <div class="props-grid">
+      <div class="prop-card">
+        <div class="prop-num dark">1</div>
+        <div class="prop-body">
+          <h3>Coloração dos nós</h3>
+          <p>Todo nó da árvore possui uma cor: <strong>vermelho</strong> ou <strong>preto</strong>. Não existe terceira opção.</p>
+        </div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-num dark">2</div>
+        <div class="prop-body">
+          <h3>Raiz sempre preta</h3>
+          <p>O nó raiz é invariavelmente preto. Após qualquer operação, a raiz é recolorida para preto se necessário.</p>
+        </div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-num dark">3</div>
+        <div class="prop-body">
+          <h3>Folhas nulas são pretas</h3>
+          <p>Todo nó folha <code>NULL</code> (sentinela) é considerado preto. Isso simplifica as regras de balanceamento.</p>
+        </div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-num red">4</div>
+        <div class="prop-body">
+          <h3>Filhos de vermelho são pretos</h3>
+          <p>Se um nó é vermelho, obrigatoriamente ambos seus filhos são pretos. <em>Não existem nós vermelhos consecutivos.</em></p>
+        </div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-num dark">5</div>
+        <div class="prop-body">
+          <h3>Altura negra uniforme</h3>
+          <p>Para cada nó, todos os caminhos até as folhas descendentes contêm exatamente o mesmo número de nós pretos.</p>
+        </div>
+      </div>
+      <div class="prop-card">
+        <div class="prop-num red">★</div>
+        <div class="prop-body">
+          <h3>LLRB — regra extra</h3>
+          <p>Na variante <em>Left-Leaning</em> (Sedgewick, 2008), nós vermelhos são sempre filhos à <strong>esquerda</strong> do pai.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AVL COMPARISON -->
+  <section class="section" id="avl">
+    <p class="section-eyebrow">Comparativo</p>
+    <h2 class="section-title">AVL vs Rubro-Negra</h2>
+    <p class="section-subtitle">Ambas têm a mesma complexidade assintótica, mas diferem significativamente na prática. A escolha depende do perfil de uso da aplicação.</p>
+    <div class="compare-grid">
+      <div class="compare-card">
+        <div class="compare-header">
+          <div class="compare-icon avl">🌲</div>
+          <h3>Árvore AVL</h3>
+        </div>
+        <div class="compare-rows">
+          <div class="compare-row"><span class="label">Busca</span><span class="val good">Mais rápida</span></div>
+          <div class="compare-row"><span class="label">Inserção</span><span class="val">Mais lenta</span></div>
+          <div class="compare-row"><span class="label">Remoção</span><span class="val">Mais lenta</span></div>
+          <div class="compare-row"><span class="label">Rotações (remoção)</span><span class="val">O(log n)</span></div>
+          <div class="compare-row"><span class="label">Balanceamento</span><span class="val good">Mais rígido</span></div>
+          <div class="compare-row"><span class="label">Memória extra</span><span class="val">Altura por nó</span></div>
+        </div>
+      </div>
+      <div class="compare-card featured">
+        <div class="compare-header">
+          <div class="compare-icon rb">🔴</div>
+          <h3>Árvore Rubro-Negra</h3>
+        </div>
+        <div class="compare-rows">
+          <div class="compare-row"><span class="label">Busca</span><span class="val">Boa</span></div>
+          <div class="compare-row"><span class="label">Inserção</span><span class="val good">Mais rápida</span></div>
+          <div class="compare-row"><span class="label">Remoção</span><span class="val good">Mais rápida</span></div>
+          <div class="compare-row"><span class="label">Rotações (remoção)</span><span class="val badge-inline">≤ 3 rotações</span></div>
+          <div class="compare-row"><span class="label">Balanceamento</span><span class="val">Mais flexível</span></div>
+          <div class="compare-row"><span class="label">Memória extra</span><span class="val">1 bit (cor) por nó</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;margin-top:1rem;font-size:14px;color:var(--text2);">
+      <strong style="color:var(--text)">Regra prática:</strong> Se sua aplicação realiza buscas com muito mais frequência que inserções/remoções → use <strong>AVL</strong>. Se inserções e remoções são frequentes → use <strong>Rubro-Negra</strong>. Ela é preferida em bibliotecas de linguagens de programação por ser de uso mais geral.
+    </div>
+  </section>
+
+  <!-- ROTATIONS -->
+  <section class="section" id="rotacoes">
+    <p class="section-eyebrow">Balanceamento</p>
+    <h2 class="section-title">Rotações e troca de cores</h2>
+    <p class="section-subtitle">A árvore rubro-negra utiliza apenas duas funções de rotação (complexidade O(1) cada) e a troca de cores para corrigir violações após inserção ou remoção.</p>
+    <div class="rotations-grid">
+      <div class="rotation-card">
+        <h3>🔄 Rotação à esquerda</h3>
+        <p>Recebe nó A com B como filho direito. Move B para o lugar de A; A se torna filho esquerdo de B. B herda a cor de A e A fica vermelho.</p>
+        <svg class="rotation-svg" viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/svg">
+          <!-- Before -->
+          <line x1="70" y1="40" x2="105" y2="90" stroke="#CBD0D8" stroke-width="1.5"/>
+          <line x1="70" y1="40" x2="35" y2="90" stroke="#CBD0D8" stroke-width="1.5"/>
+          <circle cx="70" cy="40" r="20" fill="#1a1a2e"/>
+          <text x="70" y="40" fill="white" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">A</text>
+          <circle cx="105" cy="90" r="18" fill="#C0392B"/>
+          <text x="105" y="90" fill="white" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">B</text>
+          <circle cx="35" cy="90" r="18" fill="#888"/>
+          <text x="35" y="90" fill="white" font-size="11" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">‹A</text>
+          <text x="70" y="128" fill="#888" font-size="11" text-anchor="middle" font-family="Inter,sans-serif">Antes</text>
+
+          <!-- Arrow -->
+          <path d="M148 65 L162 65" stroke="#C0392B" stroke-width="1.5" marker-end="url(#rot-arrow)" fill="none"/>
+          <text x="155" y="58" fill="#C0392B" font-size="10" text-anchor="middle" font-family="Inter,sans-serif">Rot. Esq.</text>
+          <defs>
+            <marker id="rot-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#C0392B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <!-- After -->
+          <line x1="210" y1="40" x2="175" y2="90" stroke="#CBD0D8" stroke-width="1.5"/>
+          <line x1="210" y1="40" x2="245" y2="90" stroke="#CBD0D8" stroke-width="1.5"/>
+          <circle cx="210" cy="40" r="20" fill="#1a1a2e"/>
+          <text x="210" y="40" fill="white" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">B</text>
+          <circle cx="175" cy="90" r="18" fill="#C0392B"/>
+          <text x="175" y="90" fill="white" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">A</text>
+          <circle cx="245" cy="90" r="18" fill="#888"/>
+          <text x="245" y="90" fill="white" font-size="11" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">›B</text>
+          <text x="210" y="128" fill="#888" font-size="11" text-anchor="middle" font-family="Inter,sans-serif">Depois</text>
+        </svg>
+        <div class="code-block">
+<span class="type">NO</span>* <span class="fn">rotacionaEsquerda</span>(<span class="type">NO</span>* A){
+  <span class="type">NO</span>* B = A-><span class="str">dir</span>;
+  A-><span class="str">dir</span>  = B-><span class="str">esq</span>;
+  B-><span class="str">esq</span>  = A;
+  B-><span class="str">cor</span>  = A-><span class="str">cor</span>;
+  A-><span class="str">cor</span>  = <span class="kw">RED</span>;
+  <span class="kw">return</span> B;
+}</div>
+      </div>
+      <div class="rotation-card">
+        <h3>🔄 Rotação à direita</h3>
+        <p>Recebe nó A com B como filho esquerdo. Move B para o lugar de A; A se torna filho direito de B. B herda a cor de A e A fica vermelho.</p>
+        <svg class="rotation-svg" viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/svg">
+          <line x1="70" y1="40" x2="35" y2="90" stroke="#CBD0D8" stroke-width="1.5"/>
+          <line x1="70" y1="40" x2="105" y2="90" stroke="#CBD0D8" stroke-width="1.5"/>
+          <circle cx="70" cy="40" r="20" fill="#1a1a2e"/>
+          <text x="70" y="40" fill="white" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">A</text>
+          <circle cx="35" cy="90" r="18" fill="#C0392B"/>
+          <text x="35" y="90" fill="white" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">B</text>
+          <circle cx="105" cy="90" r="18" fill="#888"/>
+          <text x="105" y="90" fill="white" font-size="11" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">›A</text>
+          <text x="70" y="128" fill="#888" font-size="11" text-anchor="middle" font-family="Inter,sans-serif">Antes</text>
+
+          <path d="M148 65 L162 65" stroke="#2980B9" stroke-width="1.5" marker-end="url(#rot-arrow2)" fill="none"/>
+          <text x="155" y="58" fill="#2980B9" font-size="10" text-anchor="middle" font-family="Inter,sans-serif">Rot. Dir.</text>
+          <defs>
+            <marker id="rot-arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#2980B9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <line x1="210" y1="40" x2="245" y2="90" stroke="#CBD0D8" stroke-width="1.5"/>
+          <line x1="210" y1="40" x2="175" y2="90" stroke="#CBD0D8" stroke-width="1.5"/>
+          <circle cx="210" cy="40" r="20" fill="#1a1a2e"/>
+          <text x="210" y="40" fill="white" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">B</text>
+          <circle cx="245" cy="90" r="18" fill="#C0392B"/>
+          <text x="245" y="90" fill="white" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">A</text>
+          <circle cx="175" cy="90" r="18" fill="#888"/>
+          <text x="175" y="90" fill="white" font-size="11" text-anchor="middle" dominant-baseline="central" font-family="Inter,sans-serif">‹B</text>
+          <text x="210" y="128" fill="#888" font-size="11" text-anchor="middle" font-family="Inter,sans-serif">Depois</text>
+        </svg>
+        <div class="code-block">
+<span class="type">NO</span>* <span class="fn">rotacionaDireita</span>(<span class="type">NO</span>* A){
+  <span class="type">NO</span>* B = A-><span class="str">esq</span>;
+  A-><span class="str">esq</span>  = B-><span class="str">dir</span>;
+  B-><span class="str">dir</span>  = A;
+  B-><span class="str">cor</span>  = A-><span class="str">cor</span>;
+  A-><span class="str">cor</span>  = <span class="kw">RED</span>;
+  <span class="kw">return</span> B;
+}</div>
+      </div>
+    </div>
+
+    <!-- Violations quick reference -->
+    <div style="margin-top:1.5rem;background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)">
+      <div style="padding:.875rem 1.25rem;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;">Correções de violações na inserção</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);">
+        <div style="padding:1rem 1.25rem;border-right:1px solid var(--border);">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:.4rem;font-weight:500;">CASO 1</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:.3rem;">Filho direito vermelho</div>
+          <div style="font-size:12px;color:var(--text2);">Filho esquerdo preto → rotação à esquerda</div>
+        </div>
+        <div style="padding:1rem 1.25rem;border-right:1px solid var(--border);">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:.4rem;font-weight:500;">CASO 2</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:.3rem;">Filho + neto esquerdo vermelhos</div>
+          <div style="font-size:12px;color:var(--text2);">Dois vermelhos à esquerda → rotação à direita</div>
+        </div>
+        <div style="padding:1rem 1.25rem;">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:.4rem;font-weight:500;">CASO 3</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:.3rem;">Ambos os filhos vermelhos</div>
+          <div style="font-size:12px;color:var(--text2);">Dois filhos vermelhos → troca de cores</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTERACTIVE DEMO -->
+  <section class="section" id="demo">
+    <p class="section-eyebrow">Demonstração interativa</p>
+    <h2 class="section-title">Construa sua árvore</h2>
+    <p class="section-subtitle">Insira valores para ver a árvore se construir em tempo real, com rotações e recolorações animadas. Use a roda do mouse, os botões de zoom ou pinça (touch) para ajustar a visualização, e arraste para navegar pela árvore.</p>
+
+    <div class="demo-wrap">
+      <div class="demo-toolbar">
+        <label for="val-input">Valor:</label>
+        <input type="number" id="val-input" class="demo-input" value="10" min="1" max="999">
+        <button class="demo-btn btn-primary" onclick="insertValue()">Inserir</button>
+        <button class="demo-btn btn-danger" onclick="removeValue()">Remover</button>
+        <button class="demo-btn btn-secondary" onclick="insertPreset()">Exemplo (5 valores)</button>
+        <div class="spacer"></div>
+        <button class="demo-btn btn-secondary" onclick="resetView()">Centralizar</button>
+        <button class="demo-btn btn-secondary" onclick="clearTree()">Limpar</button>
+      </div>
+      <div class="canvas-wrap" id="canvas-wrap">
+        <svg id="tree-canvas" viewBox="0 0 760 320"></svg>
+        <div class="zoom-controls">
+          <div class="zoom-btn" onclick="zoomBy(1.25)" title="Aumentar zoom">+</div>
+          <div class="zoom-level" id="zoom-level">100%</div>
+          <div class="zoom-btn" onclick="zoomBy(0.8)" title="Diminuir zoom">−</div>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot red"></div>Nó vermelho</div>
+        <div class="legend-item"><div class="legend-dot black"></div>Nó preto</div>
+        <div class="legend-item" style="color:var(--text3);font-style:italic;">Novos nós são sempre inseridos como vermelhos</div>
+      </div>
+      <div class="demo-stats">
+        <div class="stat">
+          <div class="stat-label">Nós</div>
+          <div class="stat-val" id="stat-nodes">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Altura</div>
+          <div class="stat-val" id="stat-height">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Nós vermelhos</div>
+          <div class="stat-val red" id="stat-red">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Nós pretos</div>
+          <div class="stat-val dark" id="stat-black">0</div>
+        </div>
+      </div>
+      <div class="demo-log">
+        <div class="log-dot info" id="log-dot"></div>
+        <span id="log-msg">Insira um valor para começar.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPLICATIONS -->
+  <section class="section" id="aplicacoes">
+    <p class="section-eyebrow">Uso prático</p>
+    <h2 class="section-title">Onde é usada?</h2>
+    <p class="section-subtitle">A árvore rubro-negra é a estrutura de uso mais geral entre as árvores balanceadas, presente em bibliotecas padrão das principais linguagens.</p>
+    <div class="apps-grid">
+      <div class="app-card">
+        <div class="app-tag">Java</div>
+        <div class="app-title">TreeMap</div>
+        <div class="app-sub">java.util.TreeMap</div>
+      </div>
+      <div class="app-card">
+        <div class="app-tag">Java</div>
+        <div class="app-title">TreeSet</div>
+        <div class="app-sub">java.util.TreeSet</div>
+      </div>
+      <div class="app-card">
+        <div class="app-tag">C++ STL</div>
+        <div class="app-title">std::map</div>
+        <div class="app-sub">multimap, multiset</div>
+      </div>
+      <div class="app-card">
+        <div class="app-tag">Linux</div>
+        <div class="app-title">Scheduler</div>
+        <div class="app-sub">Completely Fair Scheduler</div>
+      </div>
+      <div class="app-card">
+        <div class="app-tag">Linux</div>
+        <div class="app-title">Memória virtual</div>
+        <div class="app-sub">linux/rbtree.h</div>
+      </div>
+      <div class="app-card">
+        <div class="app-tag">C++ STL</div>
+        <div class="app-title">std::set</div>
+        <div class="app-sub">Conjunto ordenado</div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /main -->
+
+<footer>
+  <strong>Prof. Clayton Kossoski</strong><br>
+  Universidade Tecnológica Federal do Paraná — UTFPR<br>
+  <span style="font-size:11px;margin-top:.5rem;display:block;">Árvore Rubro-Negra (LLRB)</span>
+</footer>
+
+<script>
+/* ── Red-Black Tree (LLRB variant) ── */
+const RED = true, BLACK = false;
+let nodeId = 0;
+
+function Node(val) {
+  return { id: nodeId++, val, color: RED, left: null, right: null };
+}
+
+function isRed(n) { return n !== null && n.color === RED; }
+
+function rotateLeft(h) {
+  const x = h.right;
+  h.right = x.left;
+  x.left = h;
+  x.color = h.color;
+  h.color = RED;
+  recolorEvents.push(h.id, x.id);
+  return x;
+}
+
+function rotateRight(h) {
+  const x = h.left;
+  h.left = x.right;
+  x.right = h;
+  x.color = h.color;
+  h.color = RED;
+  recolorEvents.push(h.id, x.id);
+  return x;
+}
+
+function flipColors(h) {
+  h.color = !h.color;
+  if (h.left)  h.left.color  = !h.left.color;
+  if (h.right) h.right.color = !h.right.color;
+  recolorEvents.push(h.id);
+  if (h.left)  recolorEvents.push(h.left.id);
+  if (h.right) recolorEvents.push(h.right.id);
+}
+
+let root = null;
+let lastOp = '';
+let recolorEvents = [];
+
+function insertNode(h, val) {
+  if (h === null) return Node(val);
+  if (val < h.val)       h.left  = insertNode(h.left,  val);
+  else if (val > h.val)  h.right = insertNode(h.right, val);
+  else return h; // duplicate
+
+  if (isRed(h.right) && !isRed(h.left))  { h = rotateLeft(h);  lastOp += ' → rotação esquerda'; }
+  if (isRed(h.left)  && isRed(h.left?.left)) { h = rotateRight(h); lastOp += ' → rotação direita'; }
+  if (isRed(h.left)  && isRed(h.right))  { flipColors(h);       lastOp += ' → troca de cores'; }
+  return h;
+}
+
+function insert(val) {
+  lastOp = '';
+  recolorEvents = [];
+  root = insertNode(root, val);
+  if (root.color !== BLACK) recolorEvents.push(root.id);
+  root.color = BLACK;
+}
+
+// Simplified removal
+function minNode(h) {
+  while (h.left) h = h.left;
+  return h;
+}
+
+function balance(h) {
+  if (isRed(h.right))                          h = rotateLeft(h);
+  if (isRed(h.left) && isRed(h.left?.left))    h = rotateRight(h);
+  if (isRed(h.left) && isRed(h.right))         flipColors(h);
+  return h;
+}
+
+function moveRedLeft(h) {
+  flipColors(h);
+  if (isRed(h.right?.left)) {
+    h.right = rotateRight(h.right);
+    h = rotateLeft(h);
+    flipColors(h);
+  }
+  return h;
+}
+
+function moveRedRight(h) {
+  flipColors(h);
+  if (isRed(h.left?.left)) {
+    h = rotateRight(h);
+    flipColors(h);
+  }
+  return h;
+}
+
+function deleteMin(h) {
+  if (!h.left) return null;
+  if (!isRed(h.left) && !isRed(h.left.left)) h = moveRedLeft(h);
+  h.left = deleteMin(h.left);
+  return balance(h);
+}
+
+function removeNode(h, val) {
+  if (!h) return null;
+  if (val < h.val) {
+    if (!h.left) return h;
+    if (!isRed(h.left) && !isRed(h.left.left)) h = moveRedLeft(h);
+    h.left = removeNode(h.left, val);
+  } else {
+    if (isRed(h.left)) h = rotateRight(h);
+    if (val === h.val && !h.right) return null;
+    if (!isRed(h.right) && !isRed(h.right?.left)) h = moveRedRight(h);
+    if (val === h.val) {
+      const m = minNode(h.right);
+      h.val = m.val;
+      h.right = deleteMin(h.right);
+    } else {
+      h.right = removeNode(h.right, val);
+    }
+  }
+  return balance(h);
+}
+
+function remove(val) {
+  lastOp = '';
+  recolorEvents = [];
+  if (!findNode(root, val)) return false;
+  root = removeNode(root, val);
+  if (root) {
+    if (root.color !== BLACK) recolorEvents.push(root.id);
+    root.color = BLACK;
+  }
+  return true;
+}
+
+function findNode(h, val) {
+  if (!h) return false;
+  if (val === h.val) return true;
+  if (val < h.val) return findNode(h.left, val);
+  return findNode(h.right, val);
+}
+
+/* ── Drawing ── */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const canvas = document.getElementById('tree-canvas');
+const canvasWrap = document.getElementById('canvas-wrap');
+
+function treeHeight(h) {
+  if (!h) return 0;
+  return 1 + Math.max(treeHeight(h.left), treeHeight(h.right));
+}
+
+function countNodes(h) {
+  if (!h) return 0;
+  return 1 + countNodes(h.left) + countNodes(h.right);
+}
+
+function countColor(h, c) {
+  if (!h) return 0;
+  return (h.color === c ? 1 : 0) + countColor(h.left, c) + countColor(h.right, c);
+}
+
+function svgEl(tag, attrs) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+let knownNodeIds = new Set();
+let prevPositions = new Map(); // id -> {x,y}
+
+/* ── Pan & Zoom state ── */
+const view = { x: 0, y: 0, w: 760, h: 320 };
+const BASE_W = 760, BASE_H = 320;
+let zoomLevel = 1;
+const ZOOM_MIN = 0.4, ZOOM_MAX = 3;
+
+function applyViewBox() {
+  canvas.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
+  document.getElementById('zoom-level').textContent = Math.round(zoomLevel * 100) + '%';
+}
+
+function zoomBy(factor, cx, cy) {
+  const newZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomLevel * factor));
+  const rect = canvas.getBoundingClientRect();
+  // pivot point in viewBox coords (default to center if not given)
+  const px = (cx !== undefined) ? view.x + (cx / rect.width) * view.w : view.x + view.w / 2;
+  const py = (cy !== undefined) ? view.y + (cy / rect.height) * view.h : view.y + view.h / 2;
+
+  const newW = BASE_W / newZoom;
+  const newH = BASE_H / newZoom;
+
+  view.x = px - (px - view.x) * (newW / view.w);
+  view.y = py - (py - view.y) * (newH / view.h);
+  view.w = newW;
+  view.h = newH;
+  zoomLevel = newZoom;
+  applyViewBox();
+}
+
+function resetView() {
+  zoomLevel = 1;
+  view.w = BASE_W;
+  view.h = BASE_H;
+  view.x = 0;
+  view.y = 0;
+  applyViewBox();
+}
+
+/* Wheel zoom */
+canvasWrap.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+  const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+  zoomBy(factor, cx, cy);
+}, { passive: false });
+
+/* Drag to pan (mouse) */
+let isPanning = false;
+let panStart = { x: 0, y: 0 };
+let viewStart = { x: 0, y: 0 };
+
+canvas.addEventListener('mousedown', (e) => {
+  isPanning = true;
+  canvas.classList.add('dragging');
+  panStart = { x: e.clientX, y: e.clientY };
+  viewStart = { x: view.x, y: view.y };
+});
+window.addEventListener('mousemove', (e) => {
+  if (!isPanning) return;
+  const rect = canvas.getBoundingClientRect();
+  const dx = (e.clientX - panStart.x) * (view.w / rect.width);
+  const dy = (e.clientY - panStart.y) * (view.h / rect.height);
+  view.x = viewStart.x - dx;
+  view.y = viewStart.y - dy;
+  applyViewBox();
+});
+window.addEventListener('mouseup', () => {
+  isPanning = false;
+  canvas.classList.remove('dragging');
+});
+
+/* Touch: pan + pinch zoom */
+let touchState = null;
+
+function touchDist(t1, t2) {
+  return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+}
+function touchMid(t1, t2, rect) {
+  return {
+    x: (t1.clientX + t2.clientX) / 2 - rect.left,
+    y: (t1.clientY + t2.clientY) / 2 - rect.top
+  };
+}
+
+canvasWrap.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 1) {
+    touchState = { mode: 'pan', x: e.touches[0].clientX, y: e.touches[0].clientY, viewX: view.x, viewY: view.y };
+  } else if (e.touches.length === 2) {
+    const rect = canvas.getBoundingClientRect();
+    touchState = {
+      mode: 'pinch',
+      dist: touchDist(e.touches[0], e.touches[1]),
+      mid: touchMid(e.touches[0], e.touches[1], rect),
+      zoomStart: zoomLevel,
+      viewStart: { x: view.x, y: view.y, w: view.w, h: view.h }
+    };
+  }
+}, { passive: true });
+
+canvasWrap.addEventListener('touchmove', (e) => {
+  if (!touchState) return;
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  if (touchState.mode === 'pan' && e.touches.length === 1) {
+    const dx = (e.touches[0].clientX - touchState.x) * (view.w / rect.width);
+    const dy = (e.touches[0].clientY - touchState.y) * (view.h / rect.height);
+    view.x = touchState.viewX - dx;
+    view.y = touchState.viewY - dy;
+    applyViewBox();
+  } else if (touchState.mode === 'pinch' && e.touches.length === 2) {
+    const newDist = touchDist(e.touches[0], e.touches[1]);
+    const factor = newDist / touchState.dist;
+    const newZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, touchState.zoomStart * factor));
+    const px = touchState.viewStart.x + (touchState.mid.x / rect.width) * touchState.viewStart.w;
+    const py = touchState.viewStart.y + (touchState.mid.y / rect.height) * touchState.viewStart.h;
+    const newW = BASE_W / newZoom;
+    const newH = BASE_H / newZoom;
+    view.x = px - (px - touchState.viewStart.x) * (newW / touchState.viewStart.w);
+    view.y = py - (py - touchState.viewStart.y) * (newH / touchState.viewStart.h);
+    view.w = newW;
+    view.h = newH;
+    zoomLevel = newZoom;
+    applyViewBox();
+  }
+}, { passive: false });
+
+canvasWrap.addEventListener('touchend', () => { touchState = null; });
+
+/* ── Layout computation (positions only, no DOM) ── */
+function computeLayout(node, x, y, dx, depth, out) {
+  if (!node) return;
+  const nextY = y + 70;
+  const nextDx = Math.max(dx * 0.5, 28);
+  out.set(node.id, { x, y, depth, node });
+  if (node.left)  computeLayout(node.left,  x - dx, nextY, nextDx, depth + 1, out);
+  if (node.right) computeLayout(node.right, x + dx, nextY, nextDx, depth + 1, out);
+}
+
+function render() {
+  const layout = new Map();
+  if (root) computeLayout(root, 380, 50, 200, 0, layout);
+
+  // Clear
+  while (canvas.firstChild) canvas.removeChild(canvas.firstChild);
+
+  if (!root) {
+    const t = svgEl('text', {
+      x: 380, y: 160, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+      fill: '#aaa', 'font-size': '14', 'font-family': 'Inter,sans-serif'
+    });
+    t.textContent = 'A árvore está vazia. Insira um valor acima.';
+    canvas.appendChild(t);
+    prevPositions.clear();
+    knownNodeIds.clear();
+    return;
+  }
+
+  const newKnownIds = new Set();
+  const newPositions = new Map();
+
+  // Draw edges first (so nodes sit on top)
+  layout.forEach(({ x, y, node }) => {
+    [node.left, node.right].forEach(child => {
+      if (!child) return;
+      const cl = layout.get(child.id);
+      if (!cl) return;
+      const prevParent = prevPositions.get(node.id) || { x, y };
+      const prevChild  = prevPositions.get(child.id) || { x: cl.x, y: cl.y };
+      const line = svgEl('line', {
+        x1: prevParent.x, y1: prevParent.y, x2: prevChild.x, y2: prevChild.y,
+        stroke: '#CBD0D8', 'stroke-width': '1.5', class: 'tree-edge'
+      });
+      canvas.appendChild(line);
+      // animate to final position on next frame
+      requestAnimationFrame(() => {
+        line.setAttribute('x1', x);
+        line.setAttribute('y1', y);
+        line.setAttribute('x2', cl.x);
+        line.setAttribute('y2', cl.y);
+      });
+    });
+  });
+
+  // Draw nodes
+  layout.forEach(({ x, y, depth, node }) => {
+    const r = Math.max(18, 24 - depth * 2);
+    const fill = node.color === RED ? '#C0392B' : '#1a1a2e';
+    const stroke = node.color === RED ? '#922B21' : '#0d0d1a';
+    const isNew = !knownNodeIds.has(node.id);
+    const prev = prevPositions.get(node.id);
+    const startX = prev ? prev.x : x;
+    const startY = prev ? prev.y : y;
+
+    const circle = svgEl('circle', {
+      cx: startX, cy: isNew ? startY - 14 : startY, r: isNew ? r * 0.3 : r,
+      fill, stroke, 'stroke-width': '1.5', class: 'tree-node'
+    });
+    canvas.appendChild(circle);
+    requestAnimationFrame(() => {
+      circle.setAttribute('cx', x);
+      circle.setAttribute('cy', y);
+      circle.setAttribute('r', r);
+    });
+
+    const wasRecolored = recolorEvents.includes(node.id) && !isNew;
+    if (wasRecolored) {
+      circle.classList.add('recolor-pulse');
+      // glowing ring that expands & fades outward to draw attention to the color change
+      const ring = svgEl('circle', {
+        cx: x, cy: y, r: r,
+        fill: 'none',
+        stroke: node.color === RED ? '#C0392B' : '#1a1a2e',
+        class: 'recolor-ring'
+      });
+      canvas.appendChild(ring);
+      requestAnimationFrame(() => ring.setAttribute('r', r + 16));
+      setTimeout(() => ring.remove(), 760);
+    }
+
+    const fontSize = Math.max(10, 13 - depth);
+    const text = svgEl('text', {
+      x: startX, y: isNew ? startY - 14 : startY, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+      fill: 'white', 'font-size': isNew ? 0 : fontSize, 'font-weight': '600',
+      'font-family': 'Inter, sans-serif', class: 'tree-label'
+    });
+    text.textContent = node.val;
+    canvas.appendChild(text);
+    requestAnimationFrame(() => {
+      text.setAttribute('x', x);
+      text.setAttribute('y', y);
+      text.setAttribute('font-size', fontSize);
+    });
+
+    newKnownIds.add(node.id);
+    newPositions.set(node.id, { x, y });
+  });
+
+  knownNodeIds = newKnownIds;
+  prevPositions = newPositions;
+
+  // Stats
+  const n = countNodes(root);
+  document.getElementById('stat-nodes').textContent = n;
+  document.getElementById('stat-height').textContent = n > 0 ? treeHeight(root) : '—';
+  document.getElementById('stat-red').textContent = countColor(root, RED);
+  document.getElementById('stat-black').textContent = countColor(root, BLACK);
+}
+
+function setLog(msg, type = 'info') {
+  document.getElementById('log-msg').textContent = msg;
+  const dot = document.getElementById('log-dot');
+  dot.className = `log-dot ${type}`;
+}
+
+function insertValue() {
+  const input = document.getElementById('val-input');
+  const val = parseInt(input.value, 10);
+  if (isNaN(val) || val < 1 || val > 9999) { setLog('Valor inválido. Use um número entre 1 e 9999.', 'info'); return; }
+  if (findNode(root, val)) { setLog(`Valor ${val} já existe na árvore.`, 'info'); return; }
+  insert(val);
+  render();
+  const ops = lastOp || 'nenhuma correção necessária';
+  const recolorNote = recolorEvents.length ? ` (cores ajustadas em ${new Set(recolorEvents).size} nó(s))` : '';
+  setLog(`Inserido ${val} (vermelho) → ${ops}${recolorNote}`, lastOp ? 'rotate' : 'insert');
+  input.value = '';
+}
+
+function removeValue() {
+  const input = document.getElementById('val-input');
+  const val = parseInt(input.value, 10);
+  if (isNaN(val)) { setLog('Informe o valor a remover.', 'info'); return; }
+  const ok = remove(val);
+  if (!ok) { setLog(`Valor ${val} não encontrado na árvore.`, 'info'); return; }
+  render();
+  setLog(`Removido ${val} e balanceamento restaurado.`, 'remove');
+  input.value = '';
+}
+
+let presetIdx = 0;
+const presets = [
+  [20, 10, 35, 5, 15, 30, 50, 1, 12, 18],
+  [50, 25, 75, 10, 40, 60, 90, 5, 15, 35],
+  [30, 15, 45, 8, 22, 38, 55, 3, 12, 20],
+];
+
+function insertPreset() {
+  clearTree();
+  const vals = presets[presetIdx % presets.length];
+  presetIdx++;
+  let i = 0;
+  function step() {
+    if (i >= vals.length) { setLog(`Exemplo completo: ${vals.join(', ')}`, 'info'); return; }
+    const v = vals[i++];
+    insert(v);
+    render();
+    setLog(`Inserindo ${v}…`, 'insert');
+    setTimeout(step, 650);
+  }
+  step();
+}
+
+function clearTree() {
+  root = null;
+  knownNodeIds = new Set();
+  prevPositions = new Map();
+  recolorEvents = [];
+  resetView();
+  render();
+  setLog('Árvore limpa. Insira um valor para começar.', 'info');
+}
+
+applyViewBox();
+render();
+
+/* ── Nav active state on scroll ── */
+const navLinks = document.querySelectorAll('nav a');
+const sections = document.querySelectorAll('[id]');
+
+function updateNav() {
+  let cur = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) cur = s.id; });
+  navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur));
+}
+window.addEventListener('scroll', updateNav);
+
+/* ── Scroll reveal ── */
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.section').forEach(s => obs.observe(s));
+
+/* ── Enter key on input ── */
+document.getElementById('val-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') insertValue();
+});
+</script>
+</body>
+</html>
